@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bàn Phím Giám Định</title>
+    <script src="/static/socket.io.js"></script>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; touch-action: manipulation; }
+        .container { display: flex; flex-direction: column; height: 100vh; }
+        /* Sửa ở đây: Cả 2 hàng đều là flex: 1 để bằng nhau */
+        .row { display: flex; flex: 1; } 
+        .btn { flex: 1; border: 1px solid #333; display: flex; justify-content: center; align-items: center; font-size: 3em; font-weight: bold; cursor: pointer; user-select: none; }
+        .btn:active { opacity: 0.6; background-color: #555 !important; }
+        .blue { background: #004080; color: #3399ff; }
+        .red { background: #800000; color: #ff4d4d; }
+        #setup { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #222; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        select, button { padding: 15px; font-size: 1.2em; margin: 10px; }
+    </style>
+</head>
+<body>
+    <div id="setup">
+        <h2>BẠN LÀ GIÁM ĐỊNH SỐ MẤY?</h2>
+        <select id="judgeSelect">
+            <option value="1">Giám định 1</option>
+            <option value="2">Giám định 2</option>
+            <option value="3">Giám định 3</option>
+            <option value="4">Giám định 4</option>
+            <option value="5">Giám định 5</option>
+        </select>
+        <button onclick="startJudge()">XÁC NHẬN VÀO CHẤM</button>
+    </div>
+
+    <div class="container" id="mainUI" style="display:none;">
+        <div class="row">
+            <div class="btn blue" onclick="sendVote('blue', 2)">+2</div> <div class="btn red" onclick="sendVote('red', 2)">+2</div>
+        </div>
+        <div class="row">
+            <div class="btn blue" onclick="sendVote('blue', 1)">+1</div>
+            <div class="btn red" onclick="sendVote('red', 1)">+1</div>
+        </div>
+    </div>
+
+    <script>
+        var socket = io();
+        var judgeId = 0;
+        function startJudge() {
+            judgeId = document.getElementById('judgeSelect').value;
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('mainUI').style.display = 'flex';
+            document.documentElement.requestFullscreen().catch((e)=>{});
+        }
+        function sendVote(side, points) {
+            if(judgeId == 0) return;
+            if (navigator.vibrate) navigator.vibrate(50);
+            socket.emit('vote_event', { judge_id: judgeId, side: side, points: points });
+        }
+    </script>
+</body>
+</html>

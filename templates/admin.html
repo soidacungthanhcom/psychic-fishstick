@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>ADMIN V5.3 - FINAL</title>
+    <script src="/static/socket.io.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 10px; text-align: center; }
+        .top-ctrl { display: flex; justify-content: space-between; background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .scoreboard { display: flex; justify-content: space-between; height: 60vh; width: 100%; gap: 10px; }
+        .team { flex: 1; background: #1a1a1a; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .score-display { font-size: 6em; font-weight: bold; background: #000; width: 80%; border-radius: 10px; margin: 10px auto; line-height: 1.2; }
+        .blue-text { color: #3399ff; } .red-text { color: #ff4d4d; }
+        .center-panel { width: 340px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .timer { font-size: 4em; color: yellow !important; background: #000 !important; border: 2px solid #555; border-radius: 10px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        .lights-box { background: #000; padding: 10px; border-radius: 5px; text-align: center; margin-top: 5px; width: 100%; box-sizing: border-box; }
+        .lights-section { display: flex; justify-content: space-between; margin-bottom: 3px; border-bottom: 1px dashed #333; padding-bottom: 3px;}
+        .light-row { display: flex; gap: 3px; }
+        .light { width: 20px; height: 20px; border-radius: 50%; background: #333; border: 1px solid #555; }
+        .on-blue { background: #0055ff; box-shadow: 0 0 10px #0055ff; border: 1px solid white; }
+        .on-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; border: 1px solid white; }
+        .btn-theme { background: #fff; color: #000; border: none; font-weight: bold; cursor: pointer; }
+        .btn-end { background: #6a0dad; color: white; font-weight: bold; font-size: 1.2em; padding: 10px; width: 100%; border: 2px solid white; cursor: pointer; margin-top: 5px;}
+        .bottom-config { background: #111; padding: 15px; position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 20px; border-top: 1px solid #444; align-items: center; z-index: 999;}
+        .time-group { display: flex; flex-direction: column; text-align: left; font-size: 0.8em; color: #aaa; }
+        input { padding: 5px; width: 60px; text-align: center; font-weight: bold; font-size: 1.1em; }
+        select, button { padding: 10px; font-size: 1em; cursor: pointer; }
+        .adj-btn { padding: 10px 15px; font-size: 1.2em; font-weight: bold; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="top-ctrl">
+    <div>
+        <button onclick="loadMatches()">🔄 Tải DS</button>
+        <select id="matchSelect" onchange="setupMatch()"><option>-- Chọn Trận --</option></select>
+    </div>
+    <div>
+        <button class="btn-theme" onclick="toggleTheme()">☀/🌙 Giao diện</button>
+        <a href="/viewer" target="_blank" style="color:yellow; margin-left: 10px;">Mở Tivi</a>
+    </div>
+</div>
+
+<div class="scoreboard">
+    <div class="team" style="border: 2px solid #3399ff">
+        <h2 class="blue-text" id="nameBlue">XANH</h2>
+        <div id="unitBlue">---</div>
+        <div class="score-display blue-text" id="scoreBlue">0</div>
+        <div>
+            <button class="adj-btn" onclick="manualAdjust('blue', 1)">+1 (Q)</button>
+            <button class="adj-btn" onclick="manualAdjust('blue', 2)">+2 (W)</button>
+            <button class="adj-btn" onclick="manualAdjust('blue', -1)">-1</button>
+        </div>
+    </div>
+
+    <div class="center-panel">
+        <h3 id="roundDisplay" style="color:#0f0; margin:0">HIỆP 1</h3>
+        <div id="timer" class="timer">02:00</div>
+        <button onclick="toggleTimer()" style="padding:10px; background: green; color:white; font-weight:bold; width: 100%;">START / STOP (Space)</button>
+        
+        <div class="lights-box">
+            <div class="lights-section">
+                <span style="color:#3399ff; font-size:0.8em">Xanh +1</span>
+                <div class="light-row" id="row_b1"><div class="light" id="ad_l_b1_1"></div><div class="light" id="ad_l_b1_2"></div><div class="light" id="ad_l_b1_3"></div><div class="light" id="ad_l_b1_4"></div><div class="light" id="ad_l_b1_5"></div></div>
+            </div>
+            <div class="lights-section">
+                <span style="color:#3399ff; font-size:0.8em">Xanh +2</span>
+                <div class="light-row" id="row_b2"><div class="light" id="ad_l_b2_1"></div><div class="light" id="ad_l_b2_2"></div><div class="light" id="ad_l_b2_3"></div><div class="light" id="ad_l_b2_4"></div><div class="light" id="ad_l_b2_5"></div></div>
+            </div>
+            <div class="lights-section">
+                <span style="color:#ff4d4d; font-size:0.8em">Đỏ +1</span>
+                <div class="light-row" id="row_r1"><div class="light" id="ad_l_r1_1"></div><div class="light" id="ad_l_r1_2"></div><div class="light" id="ad_l_r1_3"></div><div class="light" id="ad_l_r1_4"></div><div class="light" id="ad_l_r1_5"></div></div>
+            </div>
+            <div class="lights-section">
+                <span style="color:#ff4d4d; font-size:0.8em">Đỏ +2</span>
+                <div class="light-row" id="row_r2"><div class="light" id="ad_l_r2_1"></div><div class="light" id="ad_l_r2_2"></div><div class="light" id="ad_l_r2_3"></div><div class="light" id="ad_l_r2_4"></div><div class="light" id="ad_l_r2_5"></div></div>
+            </div>
+        </div>
+        
+        <button class="btn-end" onclick="finishMatch()">🏁 KẾT THÚC TRẬN</button>
+    </div>
+
+    <div class="team" style="border: 2px solid #ff4d4d">
+        <h2 class="red-text" id="nameRed">ĐỎ</h2>
+        <div id="unitRed">---</div>
+        <div class="score-display red-text" id="scoreRed">0</div>
+        <div>
+            <button class="adj-btn" onclick="manualAdjust('red', 1)">+1 (O)</button>
+            <button class="adj-btn" onclick="manualAdjust('red', 2)">+2 (P)</button>
+            <button class="adj-btn" onclick="manualAdjust('red', -1)">-1</button>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-config">
+    <div class="time-group">
+        <label>Giờ Đấu (s)</label>
+        <input type="number" id="timeMatch" value="120">
+    </div>
+    <div class="time-group">
+        <label>Giờ Nghỉ (s)</label>
+        <input type="number" id="timeBreak" value="60">
+    </div>
+    <select id="roundSelect" onchange="setRound()">
+        <option value="HIỆP 1">HIỆP 1</option>
+        <option value="NGHỈ">NGHỈ</option>
+        <option value="HIỆP 2">HIỆP 2</option>
+        <option value="HIỆP PHỤ">HIỆP PHỤ</option>
+    </select>
+    <button onclick="resetAll()">RESET</button>
+    <button onclick="saveToSheet()" style="background: #004080; color: white;">💾 LƯU</button>
+</div>
+
+<script>
+    var socket = io();
+    var scores = { blue: 0, red: 0 };
+    var currentMatch = {};
+    var isLightMode = false;
+    var timeRemaining = 120, timerInterval = null;
+    var matchList = []; 
+
+    function loadMatches() {
+        let btn = document.querySelector("button[onclick='loadMatches()']");
+        let oldText = btn.innerText;
+        btn.innerText = "⏳ Đang tải...";
+
+        fetch('/get_match_list')
+        .then(r => r.json())
+        .then(data => {
+            btn.innerText = oldText;
+            console.log("Dữ liệu nhận được:", data);
+
+            if (!Array.isArray(data)) {
+                alert("❌ Lỗi dữ liệu: Python không trả về danh sách!");
+                return;
+            }
+
+            matchList = data;
+            let s = document.getElementById('matchSelect');
+            s.innerHTML = '<option>-- Chọn Trận --</option>';
+            data.forEach((m, i) => {
+                s.innerHTML += `<option value="${i}">${m.id}: ${m.blueName} vs ${m.redName}</option>`;
+            });
+            alert("✅ Đã tải thành công " + data.length + " trận đấu!");
+        })
+        .catch(e => {
+            btn.innerText = oldText;
+            alert("❌ Lỗi tải danh sách: " + e);
+            console.error(e);
+        });
+    }
+
+    function setupMatch() { 
+        let v = document.getElementById('matchSelect').value; 
+        if(v === '-- Chọn Trận --') return; 
+        currentMatch = matchList[v]; 
+        
+        document.getElementById('nameBlue').innerText = currentMatch.blueName; 
+        document.getElementById('unitBlue').innerText = currentMatch.blueUnit; 
+        document.getElementById('nameRed').innerText = currentMatch.redName; 
+        document.getElementById('unitRed').innerText = currentMatch.redUnit; 
+        
+        resetAll(); 
+    }
+
+    function saveToSheet() {
+        let w = scores.blue > scores.red ? "XANH" : (scores.red > scores.blue ? "ĐỎ" : "HÒA");
+        if(confirm("Lưu kết quả trận đấu?")) {
+            fetch('/save_to_sheet', {
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    matchId: currentMatch.id || "TuDo",
+                    round: document.getElementById('roundDisplay').innerText,
+                    blueName: document.getElementById('nameBlue').innerText,
+                    blueScore: scores.blue,
+                    redName: document.getElementById('nameRed').innerText,
+                    redScore: scores.red,
+                    winner: w
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.result === 'success' || d.status === 'success') {
+                    alert("✅ Đã lưu thành công!");
+                } else {
+                    alert("❌ Lỗi từ Google: " + (d.msg || JSON.stringify(d)));
+                }
+            })
+            .catch(e => alert("❌ Lỗi mạng: " + e));
+        }
+    }
+
+    function setRound() {
+        stopTimer();
+        let r = document.getElementById('roundSelect').value;
+        document.getElementById('roundDisplay').innerText = r;
+        
+        if(r === "NGHỈ") timeRemaining = parseInt(document.getElementById('timeBreak').value);
+        else timeRemaining = parseInt(document.getElementById('timeMatch').value);
+        
+        updateTimerDisplay();
+        syncInfo(); 
+    }
+    
+    function toggleTimer() { if(timerInterval) stopTimer(); else timerInterval=setInterval(()=>{timeRemaining--; updateTimerDisplay(); if(timeRemaining<=0) stopTimer();},1000); }
+    function stopTimer() { clearInterval(timerInterval); timerInterval=null; }
+    function updateTimerDisplay() { let m=Math.floor(timeRemaining/60).toString().padStart(2,'0'); let s=(timeRemaining%60).toString().padStart(2,'0'); document.getElementById('timer').innerText=`${m}:${s}`; socket.emit('admin_update',{type:'timer', timeStr:`${m}:${s}`}); }
+    
+    socket.on('server_send_vote', function(d) {
+        let sideCode = d.side === 'blue' ? 'b' : 'r';
+        let lightId = `ad_l_${sideCode}${d.points}_${d.judge_id}`;
+        let light = document.getElementById(lightId);
+        let colorClass = d.side === 'blue' ? 'on-blue' : 'on-red';
+        if(light) { light.classList.add(colorClass); setTimeout(() => light.classList.remove(colorClass), 700); }
+        handleConsensus(d);
+    });
+
+    function toggleTheme() { isLightMode=!isLightMode; socket.emit('admin_update',{type:'theme', mode:isLightMode?'light':'dark'}); }
+    function finishMatch() { let w = scores.blue > scores.red ? "XANH" : (scores.red > scores.blue ? "ĐỎ" : "HÒA"); if(confirm(`Kết thúc trận? Thắng: ${w}`)) { stopTimer(); socket.emit('finish_match', { winner: w }); } }
+    
+    let voteBuffer = [];
+    function handleConsensus(d) {
+        let now = Date.now();
+        voteBuffer.push({...d, time: now});
+        voteBuffer = voteBuffer.filter(v => now - v.time <= 1000);
+        let valid = voteBuffer.filter(v => v.side === d.side && v.points === d.points);
+        let judges = [...new Set(valid.map(v => v.judge_id))];
+        if(judges.length >= 3) { updateScore(d.side, d.points); voteBuffer = voteBuffer.filter(v => !(v.side === d.side && v.points === d.points)); }
+    }
+    
+    function updateScore(s,v) { scores[s]+=v; document.getElementById(s==='blue'?'scoreBlue':'scoreRed').innerText=scores[s]; socket.emit('admin_update',{type:'score', blue:scores.blue, red:scores.red}); }
+    function manualAdjust(s,v) { updateScore(s,v); }
+    function resetAll() { scores={blue:0,red:0}; updateScore('blue',0); updateScore('red',0); socket.emit('admin_update',{type:'reset'}); setRound(); }
+    
+    function syncInfo() { 
+        socket.emit('admin_update', {
+            type: 'info', 
+            blueName: document.getElementById('nameBlue').innerText, 
+            blueUnit: document.getElementById('unitBlue').innerText, 
+            redName: document.getElementById('nameRed').innerText, 
+            redUnit: document.getElementById('unitRed').innerText, 
+            round: document.getElementById('roundDisplay').innerText,
+            category: currentMatch.category || "" 
+        }); 
+    }
+    
+    document.addEventListener('keydown', e=>{if(e.code==='Space'){e.preventDefault();toggleTimer()} if(e.key==='q'||e.key==='Q')manualAdjust('blue',1); if(e.key==='w'||e.key==='W')manualAdjust('blue',2); if(e.key==='o'||e.key==='O')manualAdjust('red',1); if(e.key==='p'||e.key==='P')manualAdjust('red',2);});
+</script>
+</body>
+</html>
