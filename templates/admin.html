@@ -205,7 +205,20 @@
         voteBuffer = voteBuffer.filter(v => now - v.time <= 1000);
         let valid = voteBuffer.filter(v => v.side === d.side && v.points === d.points);
         let judges = [...new Set(valid.map(v => v.judge_id))];
-        if(judges.length >= 3) { updateScore(d.side, d.points); voteBuffer = voteBuffer.filter(v => !(v.side === d.side && v.points === d.points)); }
+        
+        if(judges.length >= 3) { 
+            updateScore(d.side, d.points); 
+            
+            // --- GỬI LOGS SANG TIVI ---
+            let teamName = d.side === 'blue' ? "XANH" : "ĐỎ";
+            let action = d.points == 1 ? "Tay (+1)" : "Chân (+2)";
+            let timeNow = document.getElementById('timer').innerText;
+            let msg = `[${timeNow}] ${teamName} điểm ${action} (GĐ: ${judges.join(', ')})`;
+            socket.emit('admin_update', {type: 'log', message: msg});
+            // --------------------------
+
+            voteBuffer = voteBuffer.filter(v => !(v.side === d.side && v.points === d.points)); 
+        }
     }
     
     // --- XỬ LÝ ĐIỂM SỐ VÀ CẢNH CÁO ---

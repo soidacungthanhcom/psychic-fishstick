@@ -44,15 +44,23 @@
     <script>
         var socket = io();
         var judgeId = 0;
-        function startJudge() {
-            judgeId = document.getElementById('judgeSelect').value;
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('mainUI').style.display = 'flex';
-            document.documentElement.requestFullscreen().catch((e)=>{});
-        }
         function sendVote(side, points) {
-            if(judgeId == 0) return;
-            if (navigator.vibrate) navigator.vibrate(50);
+            if(judgeId == 0) {
+                alert("Vui lòng chọn Vị trí Giám định trước khi chấm!");
+                return;
+            }
+            
+            // 1. Rung điện thoại (Android) - Tăng lên 100ms cho cảm giác bấm rõ hơn
+            if (navigator.vibrate) navigator.vibrate(100);
+            
+            // 2. Hiệu ứng chớp sáng màn hình (Dành cho iPhone/iOS)
+            let originalBg = document.body.style.backgroundColor;
+            document.body.style.backgroundColor = "#555"; // Chớp sang màu xám
+            setTimeout(() => { 
+                document.body.style.backgroundColor = originalBg; // Trả về màu cũ chớp nhoáng
+            }, 100);
+
+            // 3. Gửi lệnh chấm điểm lên server
             socket.emit('vote_event', { judge_id: judgeId, side: side, points: points });
         }
     </script>
