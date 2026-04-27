@@ -35,22 +35,24 @@
         .red-score { color: var(--red-color); border-color: var(--red-color); }
 
         /* KHU VỰC ĐÈN BÁO (XOAY DỌC) */
-        .lights-area { display: flex; gap: 15px; } 
+        .lights-area { display: flex; gap: 12px; } 
         .lights-column { display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .label-light { font-size: 1.2em; opacity: 0.9; font-weight: bold; text-transform: uppercase; }
-        .light-row { display: flex; flex-direction: column; gap: 8px; } /* Xoay dọc các bóng đèn */
+        .light-row { display: flex; flex-direction: column; gap: 8px; } 
         
         .light { width: 35px; height: 35px; border-radius: 50%; background: #222; border: 2px solid #444; transition: 0.1s; }
         body.light-mode .light { background: #ddd; border: 2px solid #999; }
 
-        /* MÀU SẮC RIÊNG BIỆT CHO TỪNG LOẠI ĐIỂM */
-        /* Đội Xanh: Tay(+1)=Xanh dương | Chân(+2)=Xanh lơ (Cyan) */
-        .light.active-blue-1 { background: #ffe600 !important; box-shadow: 0 0 20px #ffe600; border-color: #fff; }
-        .light.active-blue-2 { background: #00ffff !important; box-shadow: 0 0 20px #00ffff; border-color: #fff; }
+        /* Cột số Giám Định - Khớp chiều cao với đèn (35px + 4px viền = 39px) */
+        .judge-num { height: 39px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3em; color: #888; }
 
-        /* Đội Đỏ: Tay(+1)=Đỏ tươi | Chân(+2)=Cam Vàng rực rỡ */
+        /* MÀU SẮC ĐỒNG BỘ THEO ĐIỂM SỐ */
+        /* Tay (+1) = Màu Vàng (#ffe600) | Chân (+2) = Màu Xanh (#00e5ff) */
+        .light.active-blue-1 { background: #ffe600 !important; box-shadow: 0 0 20px #ffe600; border-color: #fff; }
+        .light.active-blue-2 { background: #00e5ff !important; box-shadow: 0 0 20px #00e5ff; border-color: #fff; }
+
         .light.active-red-1 { background: #ffe600 !important; box-shadow: 0 0 20px #ffe600; border-color: #fff; }
-        .light.active-red-2 { background: #00ffff !important; box-shadow: 0 0 20px #00ffff; border-color: #fff; }
+        .light.active-red-2 { background: #00e5ff !important; box-shadow: 0 0 20px #00e5ff; border-color: #fff; }
 
         /* ĐỒNG HỒ Ở GIỮA */
         .center-area { width: 220px; text-align: center; margin-top: 40px; }
@@ -80,11 +82,21 @@
             <div class="team-content">
                 <div class="lights-area">
                     <div class="lights-column">
-                        <span class="label-light" style="color: #0055ff;">T1</span>
+                        <span class="label-light" style="color: #ffe600;">T1</span>
                         <div class="light-row" id="row_b1"><div class="light" id="l_b1_1"></div><div class="light" id="l_b1_2"></div><div class="light" id="l_b1_3"></div><div class="light" id="l_b1_4"></div><div class="light" id="l_b1_5"></div></div>
                     </div>
                     <div class="lights-column">
-                        <span class="label-light" style="color: #00ffd5;">C2</span>
+                        <span class="label-light" style="color: #888;">GĐ</span>
+                        <div class="light-row">
+                            <div class="judge-num">1</div>
+                            <div class="judge-num">2</div>
+                            <div class="judge-num">3</div>
+                            <div class="judge-num">4</div>
+                            <div class="judge-num">5</div>
+                        </div>
+                    </div>
+                    <div class="lights-column">
+                        <span class="label-light" style="color: #00e5ff;">C2</span>
                         <div class="light-row" id="row_b2"><div class="light" id="l_b2_1"></div><div class="light" id="l_b2_2"></div><div class="light" id="l_b2_3"></div><div class="light" id="l_b2_4"></div><div class="light" id="l_b2_5"></div></div>
                     </div>
                 </div>
@@ -104,11 +116,21 @@
                 <div class="score-box red-score" id="scoreRed">0</div>
                 <div class="lights-area">
                     <div class="lights-column">
-                        <span class="label-light" style="color: #ff0000;">T1</span>
+                        <span class="label-light" style="color: #ffe600;">T1</span>
                         <div class="light-row" id="row_r1"><div class="light" id="l_r1_1"></div><div class="light" id="l_r1_2"></div><div class="light" id="l_r1_3"></div><div class="light" id="l_r1_4"></div><div class="light" id="l_r1_5"></div></div>
                     </div>
                     <div class="lights-column">
-                        <span class="label-light" style="color: #ff9900;">C2</span>
+                        <span class="label-light" style="color: #888;">GĐ</span>
+                        <div class="light-row">
+                            <div class="judge-num">1</div>
+                            <div class="judge-num">2</div>
+                            <div class="judge-num">3</div>
+                            <div class="judge-num">4</div>
+                            <div class="judge-num">5</div>
+                        </div>
+                    </div>
+                    <div class="lights-column">
+                        <span class="label-light" style="color: #00e5ff;">C2</span>
                         <div class="light-row" id="row_r2"><div class="light" id="l_r2_1"></div><div class="light" id="l_r2_2"></div><div class="light" id="l_r2_3"></div><div class="light" id="l_r2_4"></div><div class="light" id="l_r2_5"></div></div>
                     </div>
                 </div>
@@ -165,7 +187,6 @@
             let lightId = `l_${sideCode}${d.points}_${d.judge_id}`;
             let light = document.getElementById(lightId);
             
-            // Tự động sinh ra class màu: active-blue-1, active-blue-2, active-red-1, active-red-2
             let colorClass = `active-${d.side}-${d.points}`;
 
             if(light) {
