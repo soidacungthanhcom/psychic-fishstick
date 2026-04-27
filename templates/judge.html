@@ -8,32 +8,33 @@
     <style>
         body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; touch-action: manipulation; }
         .container { display: flex; flex-direction: column; height: 100vh; }
-        /* Sửa ở đây: Cả 2 hàng đều là flex: 1 để bằng nhau */
         .row { display: flex; flex: 1; } 
         .btn { flex: 1; border: 1px solid #333; display: flex; justify-content: center; align-items: center; font-size: 3em; font-weight: bold; cursor: pointer; user-select: none; }
         .btn:active { opacity: 0.6; background-color: #555 !important; }
         .blue { background: #004080; color: #3399ff; }
         .red { background: #800000; color: #ff4d4d; }
         #setup { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #222; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        select, button { padding: 15px; font-size: 1.2em; margin: 10px; }
+        select, button { padding: 15px; font-size: 1.2em; margin: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="setup">
         <h2>BẠN LÀ GIÁM ĐỊNH SỐ MẤY?</h2>
         <select id="judgeSelect">
+            <option value="0">-- Chọn vị trí --</option>
             <option value="1">Giám định 1</option>
             <option value="2">Giám định 2</option>
             <option value="3">Giám định 3</option>
             <option value="4">Giám định 4</option>
             <option value="5">Giám định 5</option>
         </select>
-        <button onclick="startJudge()">XÁC NHẬN VÀO CHẤM</button>
+        <button onclick="startJudge()" style="background: green; color: white; font-weight: bold; border: none; border-radius: 5px;">XÁC NHẬN VÀO CHẤM</button>
     </div>
 
     <div class="container" id="mainUI" style="display:none;">
         <div class="row">
-            <div class="btn blue" onclick="sendVote('blue', 2)">+2</div> <div class="btn red" onclick="sendVote('red', 2)">+2</div>
+            <div class="btn blue" onclick="sendVote('blue', 2)">+2</div> 
+            <div class="btn red" onclick="sendVote('red', 2)">+2</div>
         </div>
         <div class="row">
             <div class="btn blue" onclick="sendVote('blue', 1)">+1</div>
@@ -44,18 +45,31 @@
     <script>
         var socket = io();
         var judgeId = 0;
-       function sendVote(side, points) {
-            // Kiểm tra xem đã chọn vị trí chưa
+
+        // --- HÀM NÀY BỊ MẤT NÊN KHÔNG CHUYỂN TRANG ĐƯỢC ---
+        function startJudge() {
+            let selected = document.getElementById('judgeSelect').value;
+            if (selected == 0) {
+                alert("Vui lòng chọn Vị trí Giám định trước khi vào!");
+                return;
+            }
+            judgeId = selected;
+            document.getElementById('setup').style.display = 'none'; // Ẩn màn hình chọn
+            document.getElementById('mainUI').style.display = 'flex'; // Hiện bàn phím
+        }
+
+        // --- HÀM GỬI ĐIỂM CÓ RUNG VÀ CHỚP MÀN HÌNH ---
+        function sendVote(side, points) {
             if(typeof judgeId !== 'undefined' && judgeId == 0) return; 
 
-            // 1. Rung điện thoại (Bọc trong try-catch để chống lỗi trên các đời máy cũ)
+            // 1. Rung điện thoại
             try {
                 if (navigator.vibrate) {
                     navigator.vibrate(100); 
                 }
             } catch(e) { console.log("Thiết bị không hỗ trợ rung"); }
             
-            // 2. Hiệu ứng chớp nháy phản hồi xúc giác
+            // 2. Chớp nháy màn hình
             let originalBg = document.body.style.backgroundColor;
             document.body.style.backgroundColor = "#555"; 
             setTimeout(() => { 
