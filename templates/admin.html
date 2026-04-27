@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN V5.3 - FINAL</title>
+    <title>ADMIN V5.4 - CÓ NHẮC NHỞ</title>
     <script src="/static/socket.io.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 10px; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 10px; text-align: center; overflow-y: auto; }
         .top-ctrl { display: flex; justify-content: space-between; background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
         .scoreboard { display: flex; justify-content: space-between; height: 60vh; width: 100%; gap: 10px; }
         .team { flex: 1; background: #1a1a1a; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; }
@@ -50,6 +50,7 @@
             <button class="adj-btn" onclick="manualAdjust('blue', 1)">+1 (Q)</button>
             <button class="adj-btn" onclick="manualAdjust('blue', 2)">+2 (W)</button>
             <button class="adj-btn" onclick="manualAdjust('blue', -1)">-1</button>
+            <button class="adj-btn" id="warnBtn_blue" onclick="addWarning('blue')" style="background: #ff9900; color: #000;">⚠ Lỗi (0)</button>
         </div>
     </div>
 
@@ -88,6 +89,7 @@
             <button class="adj-btn" onclick="manualAdjust('red', 1)">+1 (O)</button>
             <button class="adj-btn" onclick="manualAdjust('red', 2)">+2 (P)</button>
             <button class="adj-btn" onclick="manualAdjust('red', -1)">-1</button>
+            <button class="adj-btn" id="warnBtn_red" onclick="addWarning('red')" style="background: #ff9900; color: #000;">⚠ Lỗi (0)</button>
         </div>
     </div>
 </div>
@@ -114,6 +116,7 @@
 <script>
     var socket = io();
     var scores = { blue: 0, red: 0 };
+    var warnings = { blue: 0, red: 0 }; // Khai báo biến theo dõi lỗi
     var currentMatch = {};
     var isLightMode = false;
     var timeRemaining = 120, timerInterval = null;
@@ -129,37 +132,24 @@
         .then(data => {
             btn.innerText = oldText;
             console.log("Dữ liệu nhận được:", data);
-
-            if (!Array.isArray(data)) {
-                alert("❌ Lỗi dữ liệu: Python không trả về danh sách!");
-                return;
-            }
-
+            if (!Array.isArray(data)) { alert("❌ Lỗi dữ liệu!"); return; }
             matchList = data;
             let s = document.getElementById('matchSelect');
             s.innerHTML = '<option>-- Chọn Trận --</option>';
-            data.forEach((m, i) => {
-                s.innerHTML += `<option value="${i}">${m.id}: ${m.blueName} vs ${m.redName}</option>`;
-            });
+            data.forEach((m, i) => { s.innerHTML += `<option value="${i}">${m.id}: ${m.blueName} vs ${m.redName}</option>`; });
             alert("✅ Đã tải thành công " + data.length + " trận đấu!");
         })
-        .catch(e => {
-            btn.innerText = oldText;
-            alert("❌ Lỗi tải danh sách: " + e);
-            console.error(e);
-        });
+        .catch(e => { btn.innerText = oldText; alert("❌ Lỗi tải danh sách"); });
     }
 
     function setupMatch() { 
         let v = document.getElementById('matchSelect').value; 
         if(v === '-- Chọn Trận --') return; 
         currentMatch = matchList[v]; 
-        
         document.getElementById('nameBlue').innerText = currentMatch.blueName; 
         document.getElementById('unitBlue').innerText = currentMatch.blueUnit; 
         document.getElementById('nameRed').innerText = currentMatch.redName; 
         document.getElementById('unitRed').innerText = currentMatch.redUnit; 
-        
         resetAll(); 
     }
 
@@ -178,16 +168,7 @@
                     redScore: scores.red,
                     winner: w
                 })
-            })
-            .then(r => r.json())
-            .then(d => {
-                if(d.result === 'success' || d.status === 'success') {
-                    alert("✅ Đã lưu thành công!");
-                } else {
-                    alert("❌ Lỗi từ Google: " + (d.msg || JSON.stringify(d)));
-                }
-            })
-            .catch(e => alert("❌ Lỗi mạng: " + e));
+            }).then(r => r.json()).then(d => { alert("✅ Đã xử lý lệnh lưu!"); });
         }
     }
 
@@ -195,10 +176,8 @@
         stopTimer();
         let r = document.getElementById('roundSelect').value;
         document.getElementById('roundDisplay').innerText = r;
-        
         if(r === "NGHỈ") timeRemaining = parseInt(document.getElementById('timeBreak').value);
         else timeRemaining = parseInt(document.getElementById('timeMatch').value);
-        
         updateTimerDisplay();
         syncInfo(); 
     }
@@ -229,9 +208,42 @@
         if(judges.length >= 3) { updateScore(d.side, d.points); voteBuffer = voteBuffer.filter(v => !(v.side === d.side && v.points === d.points)); }
     }
     
-    function updateScore(s,v) { scores[s]+=v; document.getElementById(s==='blue'?'scoreBlue':'scoreRed').innerText=scores[s]; socket.emit('admin_update',{type:'score', blue:scores.blue, red:scores.red}); }
+    // --- XỬ LÝ ĐIỂM SỐ VÀ CẢNH CÁO ---
+    function updateScore(s,v) { 
+        scores[s]+=v; 
+        document.getElementById(s==='blue'?'scoreBlue':'scoreRed').innerText=scores[s]; 
+        socket.emit('admin_update',{type:'score', blue:scores.blue, red:scores.red}); 
+    }
+    
     function manualAdjust(s,v) { updateScore(s,v); }
-    function resetAll() { scores={blue:0,red:0}; updateScore('blue',0); updateScore('red',0); socket.emit('admin_update',{type:'reset'}); setRound(); }
+
+    function addWarning(side) {
+        warnings[side]++; // Tăng 1 lần nhắc nhở
+        
+        // Đủ 3 lần -> Trừ 2 điểm và Reset lại số lần nhắc
+        if (warnings[side] >= 3) {
+            updateScore(side, -2);
+            warnings[side] = 0; 
+            alert(`[HỆ THỐNG] VĐV ${side === 'blue' ? 'XANH' : 'ĐỎ'} đã vi phạm 3 lần. TỰ ĐỘNG TRỪ 2 ĐIỂM!`);
+        }
+        
+        // Cập nhật lên nút bấm Admin
+        document.getElementById('warnBtn_' + side).innerText = `⚠ Lỗi (${warnings[side]})`;
+        // Gửi tín hiệu sang Tivi (Viewer)
+        socket.emit('admin_update', {type: 'warning', blueWarn: warnings.blue, redWarn: warnings.red});
+    }
+
+    function resetAll() { 
+        scores = {blue: 0, red: 0}; 
+        warnings = {blue: 0, red: 0}; // Reset lỗi
+        updateScore('blue', 0); 
+        updateScore('red', 0); 
+        document.getElementById('warnBtn_blue').innerText = `⚠ Lỗi (0)`;
+        document.getElementById('warnBtn_red').innerText = `⚠ Lỗi (0)`;
+        socket.emit('admin_update', {type: 'reset'}); 
+        socket.emit('admin_update', {type: 'warning', blueWarn: 0, redWarn: 0});
+        setRound(); 
+    }
     
     function syncInfo() { 
         socket.emit('admin_update', {
@@ -243,6 +255,8 @@
             round: document.getElementById('roundDisplay').innerText,
             category: currentMatch.category || "" 
         }); 
+        // Đồng bộ luôn số lỗi hiện tại sang tivi khi đổi round
+        socket.emit('admin_update', {type: 'warning', blueWarn: warnings.blue, redWarn: warnings.red});
     }
     
     document.addEventListener('keydown', e=>{if(e.code==='Space'){e.preventDefault();toggleTimer()} if(e.key==='q'||e.key==='Q')manualAdjust('blue',1); if(e.key==='w'||e.key==='W')manualAdjust('blue',2); if(e.key==='o'||e.key==='O')manualAdjust('red',1); if(e.key==='p'||e.key==='P')manualAdjust('red',2);});

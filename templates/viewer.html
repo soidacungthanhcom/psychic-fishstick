@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>MÀN HÌNH THI ĐẤU V5.1</title>
+    <title>MÀN HÌNH THI ĐẤU V5.4 - CÓ NHẮC NHỞ</title>
     <script src="/static/socket.io.js"></script>
     <style>
         :root {
@@ -12,36 +12,15 @@
             --blue-color: #0055ff;
             --red-color: #ff0000;
         }
-        body.light-mode {
-            --bg-color: #fff;
-            --text-color: #000;
-            --box-bg: #f0f0f0;
-        }
-
+        body.light-mode { --bg-color: #fff; --text-color: #000; --box-bg: #f0f0f0; }
         body { margin: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: 0.3s; }
         
         .header { height: 15vh; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: #111; border-bottom: 2px solid #333; }
         .logo img { height: 70px; }
         
-        /* HEADER CENTER */
         .header-center { text-align: center; display: flex; flex-direction: column; justify-content: center; }
-        
-        .round-info { 
-            font-size: 2.2em; 
-            color: #00ff00; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            line-height: 1.2; 
-        }
-        
-        .category-info { 
-            font-size: 1.5em; 
-            color: yellow;
-            font-weight: bold; 
-            text-transform: uppercase; 
-            margin-top: 5px; 
-            text-shadow: 0 0 5px #000;
-        }
+        .round-info { font-size: 2.2em; color: #00ff00; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
+        .category-info { font-size: 1.5em; color: yellow; font-weight: bold; text-transform: uppercase; margin-top: 5px; text-shadow: 0 0 5px #000; }
 
         .main-board { flex: 1; display: flex; justify-content: space-between; padding: 10px 20px; }
         
@@ -64,27 +43,10 @@
         .light.active-red { background: var(--red-color) !important; box-shadow: 0 0 20px var(--red-color); border-color: #fff; }
 
         .center-area { width: 220px; text-align: center; margin-top: 40px; }
-        .timer { 
-            font-size: 5em; 
-            font-weight: bold; 
-            color: yellow !important;       
-            background: #000 !important;    
-            border: 4px solid #555; 
-            border-radius: 15px; 
-            padding: 10px 0; 
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        }
+        .timer { font-size: 5em; font-weight: bold; color: yellow !important; background: #000 !important; border: 4px solid #555; border-radius: 15px; padding: 10px 0; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
 
-        @keyframes blink-blue { 
-            0% { background-color: var(--box-bg); color: var(--blue-color); }
-            50% { background-color: var(--blue-color); color: #fff; }
-            100% { background-color: var(--box-bg); color: var(--blue-color); }
-        }
-        @keyframes blink-red { 
-            0% { background-color: var(--box-bg); color: var(--red-color); }
-            50% { background-color: var(--red-color); color: #fff; }
-            100% { background-color: var(--box-bg); color: var(--red-color); }
-        }
+        @keyframes blink-blue { 0% { background-color: var(--box-bg); color: var(--blue-color); } 50% { background-color: var(--blue-color); color: #fff; } 100% { background-color: var(--box-bg); color: var(--blue-color); } }
+        @keyframes blink-red { 0% { background-color: var(--box-bg); color: var(--red-color); } 50% { background-color: var(--red-color); color: #fff; } 100% { background-color: var(--box-bg); color: var(--red-color); } }
         .winner-blue { animation: blink-blue 0.5s infinite; border-color: #fff !important; }
         .winner-red { animation: blink-red 0.5s infinite; border-color: #fff !important; }
     </style>
@@ -104,6 +66,8 @@
     <div class="main-board">
         <div class="team">
             <div class="team-name" style="color: var(--blue-color)" id="nameBlue">XANH</div>
+            <div style="color: #ff9900; font-size: 1.5em; font-weight: bold; margin-bottom: 10px;" id="viewWarnBlue">Lỗi: 0/3</div>
+            
             <div class="score-box blue-score" id="scoreBlue">0</div>
             
             <div class="lights-area">
@@ -124,6 +88,8 @@
 
         <div class="team">
             <div class="team-name" style="color: var(--red-color)" id="nameRed">ĐỎ</div>
+            <div style="color: #ff9900; font-size: 1.5em; font-weight: bold; margin-bottom: 10px;" id="viewWarnRed">Lỗi: 0/3</div>
+            
             <div class="score-box red-score" id="scoreRed">0</div>
 
             <div class="lights-area">
@@ -147,7 +113,6 @@
                 document.getElementById('nameBlue').innerText = data.blueName;
                 document.getElementById('nameRed').innerText = data.redName;
                 document.getElementById('roundDisplay').innerText = data.round;
-                // --- NHẬN HẠNG CÂN ---
                 document.getElementById('categoryDisplay').innerText = data.category || "";
                 resetEffects();
             }
@@ -162,6 +127,11 @@
                 if(data.mode === 'light') document.body.classList.add('light-mode');
                 else document.body.classList.remove('light-mode');
             }
+            // NHẬN TÍN HIỆU CẢNH CÁO Ở ĐÂY
+            if(data.type === 'warning') {
+                document.getElementById('viewWarnBlue').innerText = `Lỗi: ${data.blueWarn}/3`;
+                document.getElementById('viewWarnRed').innerText = `Lỗi: ${data.redWarn}/3`;
+            }
             if(data.type === 'reset') resetEffects();
         });
 
@@ -169,7 +139,6 @@
             let sideCode = d.side === 'blue' ? 'b' : 'r';
             let lightId = `l_${sideCode}${d.points}_${d.judge_id}`;
             let light = document.getElementById(lightId);
-            
             let colorClass = d.side === 'blue' ? 'active-blue' : 'active-red';
 
             if(light) {
