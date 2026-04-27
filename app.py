@@ -1,10 +1,12 @@
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 from flask_socketio import SocketIO, emit
 import socket
 import requests
+import os
+from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'vovinam_secret'
@@ -12,7 +14,30 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 # --- LINK APPS SCRIPT CỦA BẠN ---
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUPw4t5y365-PTmaW1ka-2O_JSMfr-eOVBHVeOaNf-cmrDJ4oe2vsnY0oX-N7p6UQB/exec"
-# --------------------------------
+
+# ====================================================================
+# HỆ THỐNG BẢO MẬT (LẤY MẬT KHẨU TỪ RENDER)
+# ====================================================================
+def check_auth(username, password):
+    # Lệnh os.environ.get sẽ nhìn lên máy chủ Render để lấy mật khẩu.
+    valid_user = os.environ.get('ADMIN_USER', 'vovinam')
+    valid_pass = os.environ.get('ADMIN_PASS', 'vovinam2026')
+    return username == valid_user and password == valid_pass
+
+def authenticate():
+    return Response(
+    'CẢNH BÁO: KHU VỰC DÀNH RIÊNG CHO BAN TỔ CHỨC.\nSai tài khoản hoặc mật khẩu!', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+# ====================================================================
 
 def get_ip_address():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -28,28 +53,28 @@ def get_ip_address():
 @app.route('/')
 def index(): return "Server OK"
 
+# ĐÃ GẮN Ổ KHÓA CHO ADMIN VÀ GIÁM ĐỊNH
 @app.route('/admin')
+@requires_auth
 def admin(): return render_template('admin.html', ip=get_ip_address())
 
 @app.route('/judge')
+@requires_auth
 def judge(): return render_template('judge.html')
 
+# TIVI THÌ KHÁN GIẢ XEM TỰ DO
 @app.route('/viewer')
 def viewer(): return render_template('viewer.html')
 
-# --- LẤY DANH SÁCH ---
+# --- LẤY DANH SÁCH (BẠN LỠ TAY XÓA MẤT PHẦN NÀY, MÌNH ĐÃ THÊM LẠI) ---
 @app.route('/get_match_list', methods=['GET'])
 def get_match_list():
     try:
         print("--- Đang kết nối Google Sheet để lấy danh sách... ---")
         response = requests.get(GOOGLE_SCRIPT_URL)
-        
-        # Kiểm tra xem Google có trả về lỗi không
         if response.status_code != 200:
             print(f"❌ LỖI KẾT NỐI GOOGLE: Mã lỗi {response.status_code}")
-            print("Nội dung lỗi:", response.text[:200])
             return jsonify([])
-        
         data = response.json()
         print(f"✅ Đã tải thành công {len(data)} trận đấu!")
         return jsonify(data)
