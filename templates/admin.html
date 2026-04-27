@@ -93,7 +93,10 @@
         </div>
     </div>
 </div>
-
+<div id="logBox" style="position: fixed; bottom: 90px; right: 20px; width: 300px; background: rgba(0,0,0,0.9); border: 2px solid #555; border-radius: 10px; color: #fff; padding: 10px; z-index: 999; text-align: left;">
+    <div style="color: yellow; border-bottom: 1px solid #555; margin-bottom: 8px; font-weight: bold; font-size: 1.1em; text-align: center;">📜 LỊCH SỬ NHẢY ĐIỂM</div>
+    <div id="logContent" style="display: flex; flex-direction: column; gap: 5px; font-size: 1em; height: 120px; overflow-y: hidden;"></div>
+</div>
 <div class="bottom-config">
     <div class="time-group">
         <label>Giờ Đấu (s)</label>
@@ -209,13 +212,18 @@
         if(judges.length >= 3) { 
             updateScore(d.side, d.points); 
             
-            // --- GỬI LOGS SANG TIVI ---
+            // --- GHI LOG NGAY TẠI MÀN HÌNH ADMIN ---
             let teamName = d.side === 'blue' ? "XANH" : "ĐỎ";
             let action = d.points == 1 ? "Tay (+1)" : "Chân (+2)";
             let timeNow = document.getElementById('timer').innerText;
             let msg = `[${timeNow}] ${teamName} điểm ${action} (GĐ: ${judges.join(', ')})`;
-            socket.emit('admin_update', {type: 'log', message: msg});
-            // --------------------------
+            
+            let logDiv = document.getElementById('logContent');
+            if(logDiv) {
+                logDiv.innerHTML = `<div style="color: #00ffcc;">${msg}</div>` + logDiv.innerHTML;
+                if (logDiv.children.length > 5) { logDiv.removeChild(logDiv.lastChild); } // Giữ 5 dòng
+            }
+            // ---------------------------------------
 
             voteBuffer = voteBuffer.filter(v => !(v.side === d.side && v.points === d.points)); 
         }
@@ -246,7 +254,7 @@
         socket.emit('admin_update', {type: 'warning', blueWarn: warnings.blue, redWarn: warnings.red});
     }
 
-    function resetAll() { 
+   function resetAll() { 
         scores = {blue: 0, red: 0}; 
         warnings = {blue: 0, red: 0}; // Reset lỗi
         updateScore('blue', 0); 
@@ -255,6 +263,11 @@
         document.getElementById('warnBtn_red').innerText = `⚠ Lỗi (0)`;
         socket.emit('admin_update', {type: 'reset'}); 
         socket.emit('admin_update', {type: 'warning', blueWarn: 0, redWarn: 0});
+        
+        // Tự động xóa lịch sử trên Admin khi reset trận đấu
+        let logDiv = document.getElementById('logContent');
+        if(logDiv) logDiv.innerHTML = "";
+        
         setRound(); 
     }
     

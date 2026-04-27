@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>MÀN HÌNH THI ĐẤU V5.4 - CÓ NHẮC NHỞ</title>
+    <title>MÀN HÌNH THI ĐẤU V5.4 - FINAL</title>
     <script src="/static/socket.io.js"></script>
     <style>
         :root {
@@ -62,10 +62,7 @@
 
         <div class="logo" style="opacity:0"><img src="/static/logo.png"></div>
     </div>
-<div id="logBox" style="position: absolute; bottom: 20px; right: 20px; width: 350px; background: rgba(0,0,0,0.85); border: 2px solid #555; border-radius: 10px; color: #fff; padding: 10px; z-index: 999;">
-    <div style="color: yellow; border-bottom: 1px solid #555; margin-bottom: 8px; font-weight: bold; font-size: 1.2em;">📜 LỊCH SỬ NHẢY ĐIỂM</div>
-    <div id="logContent" style="display: flex; flex-direction: column; gap: 5px; font-size: 1.1em; height: 100px; overflow-y: hidden;"></div>
-</div>
+
     <div class="main-board">
         <div class="team">
             <div class="team-name" style="color: var(--blue-color)" id="nameBlue">XANH</div>
@@ -111,7 +108,7 @@
     <script>
         var socket = io();
 
-       socket.on('viewer_receive_update', function(data) {
+        socket.on('viewer_receive_update', function(data) {
             if(data.type === 'info') {
                 document.getElementById('nameBlue').innerText = data.blueName;
                 document.getElementById('nameRed').innerText = data.redName;
@@ -129,7 +126,7 @@
                 document.getElementById('timer').innerText = data.timeStr;
                 if(data.timeStr === "00:00") {
                     let audio = document.getElementById('buzzerSound');
-                    if(audio) audio.play().catch(e => console.log("Lỗi còi"));
+                    if(audio) audio.play().catch(e => console.log("Lỗi tự động phát âm thanh còi"));
                 }
             }
             
@@ -144,20 +141,8 @@
                 document.getElementById('viewWarnRed').innerText = `Lỗi: ${data.redWarn}/3`;
             }
             
-            // --- NHẬN LỊCH SỬ LOGS ĐIỂM ---
-            if(data.type === 'log') {
-                let logDiv = document.getElementById('logContent');
-                if(logDiv) {
-                    logDiv.innerHTML = `<div style="color: #00ffcc;">${data.message}</div>` + logDiv.innerHTML;
-                    // Xóa bớt dòng cũ nếu quá dài (giữ lại 4 dòng mới nhất)
-                    if (logDiv.children.length > 4) { logDiv.removeChild(logDiv.lastChild); }
-                }
-            }
-            
             if(data.type === 'reset') {
                 resetEffects();
-                let logDiv = document.getElementById('logContent');
-                if(logDiv) logDiv.innerHTML = ""; // Xóa lịch sử khi qua trận mới
             }
         });
 
@@ -183,6 +168,6 @@
             document.getElementById('scoreRed').classList.remove('winner-red');
         }
     </script>
-<audio id="buzzerSound" src="/static/buzzer.mp3" preload="auto"></audio>
+    <audio id="buzzerSound" src="/static/buzzer.mp3" preload="auto"></audio>
 </body>
 </html>
