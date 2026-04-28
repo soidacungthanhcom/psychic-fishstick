@@ -48,21 +48,20 @@
     <script>
         var socket = io();
         var lastData = null;
-        var currentAthlete = {}; // Biến lưu VĐV đang được chọn
+        var currentAthlete = {}; 
 
-   // --- 1. TẢI DANH SÁCH TỪ GOOGLE SHEET (BẢN CHUẨN) ---
-function loadList() {
-    // Thêm ?type=QUYEN vào sau đường dẫn để gọi đúng danh sách thi Quyền
-    fetch('/get_match_list?type=QUYEN').then(r => r.json()).then(data => {
-        let sel = document.getElementById('athleteSelect');
-        sel.innerHTML = '<option value="">-- Chọn Vận động viên --</option>';
-        data.forEach(item => {
-            // Item lấy từ DS_Quyen sẽ có dạng: id, name, unit, category
-            sel.innerHTML += `<option value='${JSON.stringify(item)}'>${item.id} - ${item.name} (${item.unit}) - ${item.category}</option>`;
-        });
-        alert(`Đã tải thành công ${data.length} VĐV thi Quyền!`);
-    }).catch(e => alert("Lỗi kết nối hoặc chưa có dữ liệu trong Sheet DS_Quyen!"));
-}
+        // --- 1. TẢI DANH SÁCH TỪ GOOGLE SHEET ---
+        function loadList() {
+            fetch('/get_match_list?type=QUYEN').then(r => r.json()).then(data => {
+                let sel = document.getElementById('athleteSelect');
+                sel.innerHTML = '<option value="">-- Chọn Vận động viên --</option>';
+                data.forEach(item => {
+                    sel.innerHTML += `<option value='${JSON.stringify(item)}'>${item.id} - ${item.name} (${item.unit}) - ${item.category}</option>`;
+                });
+                alert(`Đã tải thành công ${data.length} VĐV thi Quyền!`);
+            }).catch(e => alert("Lỗi kết nối hoặc chưa có dữ liệu trong Sheet DS_Quyen!"));
+        }
+
         // --- 2. XỬ LÝ KHI CHỌN VĐV ---
         document.getElementById('athleteSelect').addEventListener('change', function() {
             if(this.value) {
@@ -119,11 +118,20 @@ function loadList() {
                         matchId: currentAthlete.id,
                         name: currentAthlete.name,
                         total: lastData.total,
-                        // Gộp tất cả hóa đơn lỗi của 5 giám định thành 1 chuỗi dài
                         details: lastData.scores.map(s => `GĐ${s.id}: ${s.val} (${s.details})`).join(" || ")
                     })
                 }).then(r => r.json()).then(d => {
                     if(d.status === 'success' || d.result === 'success') {
                         alert("✅ Đã lưu thành công vào tab KQ_Quyen!");
                     } else {
-                        alert("❌ Có lỗi xảy ra khi lưu: " + (
+                        alert("❌ Có lỗi xảy ra khi lưu: " + (d.msg || "Không rõ nguyên nhân"));
+                    }
+                }).catch(e => alert("❌ Lỗi mạng hoặc server!"));
+            }
+        }
+
+        function resetScores() { if(confirm("Xóa trắng bảng điểm trên màn hình?")) socket.emit('reset_scores'); }
+        function changeConfig() { socket.emit('change_config', { num: document.getElementById('configSelect').value }); }
+    </script>
+</body>
+</html>
