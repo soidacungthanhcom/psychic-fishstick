@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BÀN PHÍM CHẤM QUYỀN V1.1</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body { background: #111; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* HEADER - ĐIỂM SỐ */
+        .header { text-align: center; background: #000; padding: 10px; border-radius: 10px; border: 2px solid #3399ff; position: relative; margin-bottom: 10px; }
+        .score-display { font-size: 4.5em; font-weight: bold; color: yellow; line-height: 1; margin: 5px 0; }
+        .score-label { color: #aaa; font-size: 1.2em; font-weight: bold; }
+        .undo-btn { position: absolute; right: 15px; top: 15px; background: #ff4d4d; color: white; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+
+        /* KHU VỰC BẤM NÚT CÓ CUỘN */
+        .controls { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .section-title { font-size: 1em; color: #00ffcc; border-bottom: 1px solid #333; margin: 10px 0; padding-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+        
+        /* Chỉnh lại Grid 2 cột cho cân đối */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        
+        .btn-err { background: #222; border: 1px solid #444; color: #fff; padding: 12px 5px; border-radius: 8px; font-size: 0.95em; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; cursor: pointer; text-align: center; user-select: none; }
+        .btn-err:active { background: #444; }
+        .deduct-val { font-size: 1.3em; font-weight: bold; color: #ff6666; margin-bottom: 3px; }
+        
+        /* Hiển thị số lần bấm (multi) */
+        .badge { position: absolute; top: -5px; right: -5px; background: yellow; color: black; font-weight: bold; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.85em; display: none; }
+        
+        /* Trạng thái Bật/Tắt của lỗi 1 lần (single) */
+        .active-single { background: #660000 !important; border-color: #ff4d4d !important; }
+        
+        /* HÓA ĐƠN VÀ NÚT GỬI */
+        .receipt-box { background: #000; border: 1px dashed #555; border-radius: 5px; padding: 10px; font-size: 0.9em; color: #ccc; margin-top: 10px; min-height: 40px; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; overflow-y: auto; height: 60px;}
+        .receipt-item { background: #333; padding: 3px 8px; border-radius: 3px; }
+        .submit-btn { background: #0066cc; color: white; border: none; padding: 15px; font-size: 1.5em; font-weight: bold; width: 100%; border-radius: 10px; margin-top: 10px; cursor: pointer; flex-shrink: 0; }
+
+        /* Màn hình setup lúc mới vào */
+        #setup { position: fixed; top:0; left:0; width:100%; height:100%; background: #111; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #setup select, #setup button { padding: 15px; font-size: 1.2em; width: 80%; margin: 10px; }
+        
+        /* Ẩn thanh cuộn cho mượt */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div id="setup">
+        <h2 style="color: yellow">CHẤM QUYỀN V1.1</h2>
+        <select id="judgeSelect">
+            <option value="1">Giám định 1</option><option value="2">Giám định 2</option>
+            <option value="3">Giám định 3</option><option value="4">Giám định 4</option>
+            <option value="5">Giám định 5</option>
+        </select>
+        <button onclick="startJudge()" style="background: #0066cc; color: white; border: none; font-weight: bold; border-radius: 5px;">VÀO TRẬN</button>
+    </div>
+
+    <div id="mainUI" style="display:none; flex-direction: column; height: 100%;">
+        
+        <div class="header">
+            <div class="score-label" id="jName">GIÁM ĐỊNH 1</div>
+            <div class="score-display" id="totalScore">100</div>
+            <button class="undo-btn" onclick="undoLast()">↩ Hoàn tác</button>
+        </div>
+
+        <div class="controls">
+            <div class="section-title">🛑 LỖI KỸ THUẬT & VŨ KHÍ (Cộng dồn)</div>
+            <div class="btn-grid">
+                <div class="btn-err" onclick="addMulti('Sai Động Tác', 2, 'b1')"><span class="badge" id="badge_b1">0</span><div class="deduct-val">-2</div><div>Sai Động Tác</div></div>
+                <div class="btn-err" onclick="addMulti('Ngập Ngừng', 2, 'b2')"><span class="badge" id="badge_b2">0</span><div class="deduct-val">-2</div><div>Ngập Ngừng</div></div>
+                <div class="btn-err" onclick="addMulti('Tấn Pháp Sai', 1, 'b3')"><span class="badge" id="badge_b3">0</span><div class="deduct-val">-1</div><div>Tấn Pháp Sai</div></div>
+                <div class="btn-err" onclick="addMulti('Mất Thăng Bằng', 2, 'b4')"><span class="badge" id="badge_b4">0</span><div class="deduct-val">-2</div><div>Mất Thăng Bằng</div></div>
+                <div class="btn-err" onclick="addMulti('Bỏ Động Tác', 5, 'b5')"><span class="badge" id="badge_b5">0</span><div class="deduct-val">-5</div><div>Bỏ Động Tác</div></div>
+                <div class="btn-err" onclick="addMulti('Rớt Vũ Khí', 5, 'b6')"><span class="badge" id="badge_b6">0</span><div class="deduct-val">-5</div><div>Rớt Vũ Khí</div></div>
+                <div class="btn-err" onclick="addMulti('Vũ Khí Chạm Nhẹ', 2, 'b7')"><span class="badge" id="badge_b7">0</span><div class="deduct-val">-2</div><div>Vũ Khí Chạm Nhẹ</div></div>
+                <div class="btn-err" onclick="addMulti('Vũ Khí Chạm Nặng', 5, 'b8')"><span class="badge" id="badge_b8">0</span><div class="deduct-val">-5</div><div>Vũ Khí Chạm Nặng</div></div>
+            </div>
+
+            <div class="section-title" style="color: #ff9900; margin-top: 15px;">⚠️ LỖI TOÀN BÀI & NGHỆ THUẬT (1 Lần)</div>
+            <div class="btn-grid">
+                <div class="btn-err" id="s1" onclick="toggleSingle('Sai Vị Trí Đích', 2, 's1')"><div class="deduct-val">-2</div><div>Sai Vị Trí Đích</div></div>
+                <div class="btn-err" id="s2" onclick="toggleSingle('Thiếu Uy Lực', 2, 's2')"><div class="deduct-val">-2</div><div>Thiếu Uy Lực</div></div>
+                <div class="btn-err" id="s3" onclick="toggleSingle('Động Tác Chậm', 2, 's3')"><div class="deduct-val">-2</div><div>Động Tác Chậm</div></div>
+                <div class="btn-err" id="s4" onclick="toggleSingle('Kết Thúc Mệt Mỏi', 2, 's4')"><div class="deduct-val">-2</div><div>Kết Thúc Mệt Mỏi</div></div>
+                <div class="btn-err" id="s5" onclick="toggleSingle('Thiếu Uyển Chuyển', 5, 's5')"><div class="deduct-val">-5</div><div>Thiếu Uyển Chuyển</div></div>
+                <div class="btn-err" id="s6" onclick="toggleSingle('Thiếu Ấn Tượng', 2, 's6')"><div class="deduct-val">-2</div><div>Thiếu Ấn Tượng</div></div>
+            </div>
+        </div>
+
+        <div class="receipt-box" id="receiptBox">Chưa có lỗi nào...</div>
+
+        <button class="submit-btn" onclick="submitFinal()">GỬI ĐIỂM (100)</button>
+    </div>
+
+    <script>
+        var socket = io();
+        var judgeId = 0;
+        
+        var currentScore = 100;
+        var errorLog = {}; // Lưu trữ log lỗi
+        var actionHistory = []; // Lưu lịch sử để Undo
+
+        function startJudge() {
+            judgeId = document.getElementById('judgeSelect').value;
+            document.getElementById('jName').innerText = "GIÁM ĐỊNH " + judgeId;
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('mainUI').style.display = 'flex';
+        }
+
+        // --- XỬ LÝ LỖI CỘNG DỒN (NHIỀU LẦN) ---
+        function addMulti(errName, points, badgeId) {
+            if(navigator.vibrate) navigator.vibrate(50);
+            
+            if(!errorLog[errName]) errorLog[errName] = {count: 0, points: 0, isSingle: false, id: badgeId};
+            errorLog[errName].count += 1;
+            errorLog[errName].points += points;
+            
+            actionHistory.push({type: 'multi', name: errName, points: points});
+            updateUI();
+        }
+
+        // --- XỬ LÝ LỖI 1 LẦN (BẬT/TẮT) ---
+        function toggleSingle(errName, points, btnId) {
+            if(navigator.vibrate) navigator.vibrate(50);
+
+            if(!errorLog[errName]) {
+                errorLog[errName] = {count: 1, points: points, isSingle: true, id: btnId};
+                actionHistory.push({type: 'single_on', name: errName, points: points});
+            } else {
+                actionHistory.push({type: 'single_off', name: errName, points: points});
+                delete errorLog[errName];
+            }
+            updateUI();
+        }
+
+        // --- HOÀN TÁC (UNDO) ---
+        function undoLast() {
+            if(actionHistory.length === 0) return;
+            let lastAction = actionHistory.pop();
+
+            if(lastAction.type === 'multi') {
+                errorLog[lastAction.name].count -= 1;
+                errorLog[lastAction.name].points -= lastAction.points;
+                if(errorLog[lastAction.name].count === 0) delete errorLog[lastAction.name];
+            } 
+            else if(lastAction.type === 'single_on') {
+                delete errorLog[lastAction.name];
+            }
+            else if(lastAction.type === 'single_off') {
+                errorLog[lastAction.name] = {count: 1, points: lastAction.points, isSingle: true, id: getBtnIdForSingle(lastAction.name)};
+            }
+            updateUI();
+        }
+
+        function getBtnIdForSingle(name) {
+            if(name==='Sai Vị Trí Đích') return 's1'; if(name==='Thiếu Uy Lực') return 's2';
+            if(name==='Động Tác Chậm') return 's3'; if(name==='Kết Thúc Mệt Mỏi') return 's4';
+            if(name==='Thiếu Uyển Chuyển') return 's5'; if(name==='Thiếu Ấn Tượng') return 's6';
+            return '';
+        }
+
+        // --- CẬP NHẬT GIAO DIỆN & TỔNG ĐIỂM ---
+        function updateUI() {
+            let totalDeduct = 0;
+            let receiptHTML = "";
+
+            // Reset trạng thái
+            document.querySelectorAll('.badge').forEach(b => b.style.display = 'none');
+            document.querySelectorAll('.btn-err').forEach(b => b.classList.remove('active-single'));
+
+            // Render lại lỗi
+            for (const [name, data] of Object.entries(errorLog)) {
+                totalDeduct += data.points;
+                let text = data.isSingle ? `[-${data.points}] ${name}` : `[-${data.points}] ${name} (x${data.count})`;
+                receiptHTML += `<div class="receipt-item">${text}</div>`;
+
+                if(data.isSingle) {
+                    document.getElementById(data.id).classList.add('active-single');
+                } else {
+                    let badge = document.getElementById('badge_' + data.id);
+                    badge.innerText = data.count;
+                    badge.style.display = 'flex';
+                }
+            }
+
+            // Tính điểm (Thang 100)
+            currentScore = 100 - totalDeduct;
+            if(currentScore < 0) currentScore = 0; 
+            document.getElementById('totalScore').innerText = currentScore;
+            
+            document.querySelector('.submit-btn').innerText = `GỬI ĐIỂM (${currentScore})`;
+            document.getElementById('receiptBox').innerHTML = receiptHTML === "" ? "Chưa có lỗi nào..." : receiptHTML;
+            
+            // Tự động cuộn hộp hóa đơn xuống cuối
+            let rb = document.getElementById('receiptBox');
+            rb.scrollTop = rb.scrollHeight;
+        }
+
+        // --- GỬI ĐIỂM LÊN SERVER ---
+        function submitFinal() {
+            if(!confirm(`Xác nhận gửi ${currentScore} điểm?`)) return;
+
+            let detailsArray = [];
+            for (const [name, data] of Object.entries(errorLog)) {
+                detailsArray.push(data.isSingle ? name : `${name} (x${data.count})`);
+            }
+            let detailsStr = detailsArray.length > 0 ? detailsArray.join(" | ") : "Hoàn hảo, không lỗi";
+
+            socket.emit('submit_score', {
+                judge_id: judgeId,
+                score: currentScore,
+                details: detailsStr 
+            });
+
+            currentScore = 100;
+            errorLog = {};
+            actionHistory = [];
+            updateUI();
+            
+            alert("✅ Đã gửi điểm thành công!");
+        }
+    </script>
+</body>
+</html>
