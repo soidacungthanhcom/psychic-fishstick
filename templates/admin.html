@@ -44,6 +44,39 @@
         <button class="btn-theme" onclick="toggleTheme()">☀/🌙 Giao diện</button>
         <a href="/viewer" target="_blank" style="color:yellow; margin-left: 10px;">Mở Tivi</a>
     </div>
+    <button onclick="toggleVarPanel()" style="background: #8b0000; color: white; border-radius: 5px; font-weight: bold;">🎥 MỞ TRẠM VAR</button>
+</div>
+
+<div id="varPanel" style="display: none; background: #222; border: 2px dashed #ff9900; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 10px;">
+        <h3 style="color: #ff9900; margin: 0;">🎥 HỆ THỐNG VAR TẠI BÀN</h3>
+        <button onclick="toggleVarPanel()" style="background: transparent; color: red; border: none; font-size: 1.2em; cursor: pointer;">❌ Đóng</button>
+    </div>
+    
+    <div style="display: flex; gap: 15px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px; max-width: 450px;">
+            <div style="color: #00ffcc; font-weight: bold; margin-bottom: 5px;">🔴 CAM TRỰC TIẾP</div>
+            <video id="varLiveVideo" autoplay playsinline muted style="width: 100%; border-radius: 5px; background: #000; border: 1px solid #555;"></video>
+            
+            <div style="margin-top: 10px; display: flex; gap: 5px; justify-content: center;">
+                <button id="btnVarRecord" onclick="toggleVarRecord()" style="background: #cc0000; color: white; padding: 8px 12px; font-weight: bold; border-radius: 5px;">🔴 BẮT ĐẦU</button>
+                <button id="btnVarPause" onclick="pauseVarRecord()" style="background: #ffcc00; color: black; padding: 8px 12px; font-weight: bold; border-radius: 5px; display: none;">⏸️ TẠM DỪNG</button>
+                <button id="btnVarStop" onclick="stopVarRecord()" style="background: #0066cc; color: white; padding: 8px 12px; font-weight: bold; border-radius: 5px; display: none;">⏹️ CHỐT VIDEO</button>
+            </div>
+        </div>
+        
+        <div id="varReplayBox" style="flex: 1; min-width: 300px; max-width: 450px; display: none;">
+            <div style="color: #ff9900; font-weight: bold; margin-bottom: 5px;">⏪ BĂNG HÌNH VAR</div>
+            <video id="varReplayVideo" controls style="width: 100%; border-radius: 5px; background: #000; border: 1px solid #ff9900;"></video>
+            
+            <div style="margin-top: 10px; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="setVarSpeed(1.0)" style="background: #444; color: white; padding: 5px 10px; border-radius: 3px;">1x</button>
+                <button onclick="setVarSpeed(0.5)" style="background: #444; color: white; padding: 5px 10px; border-radius: 3px;">0.5x</button>
+                <button onclick="setVarSpeed(0.25)" style="background: #444; color: white; padding: 5px 10px; border-radius: 3px;">0.25x</button>
+                <button onclick="downloadVarVideo()" style="background: #28a745; color: white; padding: 5px 10px; font-weight: bold; border-radius: 3px; margin-left: 10px;">💾 LƯU TÌNH HUỐNG</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="scoreboard">
@@ -315,6 +348,118 @@
     }
     
     document.addEventListener('keydown', e=>{if(e.code==='Space'){e.preventDefault();toggleTimer()} if(e.key==='q'||e.key==='Q')manualAdjust('blue',1); if(e.key==='w'||e.key==='W')manualAdjust('blue',2); if(e.key==='o'||e.key==='O')manualAdjust('red',1); if(e.key==='p'||e.key==='P')manualAdjust('red',2);});
+
+
+    // ==========================================
+    // MÔ-ĐUN VAR TÍCH HỢP (CÓ TẠM DỪNG & ĐẶT TÊN)
+    // ==========================================
+    let varMediaRecorder;
+    let varRecordedChunks = [];
+    let varVideoBlob;
+
+    // 1. Mở/Đóng Camera
+    async function toggleVarPanel() {
+        let panel = document.getElementById('varPanel');
+        let videoObj = document.getElementById('varLiveVideo');
+        
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            try {
+                // Ưu tiên camera sau (nếu dùng trên máy tính bảng/điện thoại)
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                videoObj.srcObject = stream;
+            } catch (err) {
+                alert("Không thể kết nối Camera. Vui lòng cấp quyền trong trình duyệt!");
+            }
+        } else {
+            panel.style.display = 'none';
+            // Tắt camera để tiết kiệm pin khi không dùng
+            if (videoObj.srcObject) {
+                videoObj.srcObject.getTracks().forEach(track => track.stop());
+                videoObj.srcObject = null;
+            }
+        }
+    }
+
+    // 2. Xử lý Quay / Dừng
+    function toggleVarRecord() {
+        let liveVideo = document.getElementById('varLiveVideo');
+        if(!liveVideo.srcObject) return alert("Camera chưa sẵn sàng!");
+
+        if(!varMediaRecorder || varMediaRecorder.state === 'inactive') {
+            varRecordedChunks = [];
+            varMediaRecorder = new MediaRecorder(liveVideo.srcObject, { mimeType: 'video/webm' });
+            
+            varMediaRecorder.ondataavailable = e => { if (e.data.size > 0) varRecordedChunks.push(e.data); };
+            
+            // Khi chốt video
+            varMediaRecorder.onstop = () => {
+                varVideoBlob = new Blob(varRecordedChunks, { type: 'video/webm' });
+                document.getElementById('varReplayVideo').src = URL.createObjectURL(varVideoBlob);
+                document.getElementById('varReplayBox').style.display = 'block';
+            };
+            
+            varMediaRecorder.start();
+            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG QUAY...";
+            document.getElementById('btnVarRecord').style.background = "#8b0000";
+            document.getElementById('btnVarPause').style.display = 'inline-block';
+            document.getElementById('btnVarStop').style.display = 'inline-block';
+            document.getElementById('varReplayBox').style.display = 'none';
+        }
+    }
+
+    // 3. Cơ chế Tạm dừng (Pause) chống tốn dung lượng
+    function pauseVarRecord() {
+        if(varMediaRecorder && varMediaRecorder.state === 'recording') {
+            varMediaRecorder.pause();
+            document.getElementById('btnVarPause').innerText = "▶️ TIẾP TỤC";
+            document.getElementById('btnVarPause').style.background = "#28a745"; // Đổi màu xanh
+            document.getElementById('btnVarRecord').innerText = "⏸️ ĐÃ TẠM DỪNG";
+        } else if (varMediaRecorder && varMediaRecorder.state === 'paused') {
+            varMediaRecorder.resume();
+            document.getElementById('btnVarPause').innerText = "⏸️ TẠM DỪNG";
+            document.getElementById('btnVarPause').style.background = "#ffcc00"; // Đổi về vàng
+            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG QUAY...";
+        }
+    }
+
+    // 4. Chốt video đưa vào phân tích VAR
+    function stopVarRecord() {
+        if(varMediaRecorder && (varMediaRecorder.state === 'recording' || varMediaRecorder.state === 'paused')) {
+            varMediaRecorder.stop();
+            document.getElementById('btnVarRecord').innerText = "🔴 QUAY LẠI TỪ ĐẦU";
+            document.getElementById('btnVarRecord').style.background = "#cc0000";
+            document.getElementById('btnVarPause').style.display = 'none';
+            document.getElementById('btnVarStop').style.display = 'none';
+        }
+    }
+
+    // 5. Tua chậm chuyên nghiệp
+    function setVarSpeed(rate) {
+        document.getElementById('varReplayVideo').playbackRate = rate;
+    }
+
+    // 6. Tính năng Tải xuống thông minh (Đặt tên theo bối cảnh)
+    function downloadVarVideo() {
+        if(!varVideoBlob) return;
+        
+        // Tự động lấy tên Trận và Hiệp hiện tại trên màn hình Admin
+        let matchCode = currentMatch && currentMatch.id ? currentMatch.id : "TuDo";
+        let roundNum = document.getElementById('roundDisplay') ? document.getElementById('roundDisplay').innerText : "HiepX";
+        
+        // Gợi ý tên chuẩn, cho phép Thư ký sửa lại
+        let defaultFileName = `VAR_Tran_${matchCode}_${roundNum}`;
+        let fileName = prompt("Nhập tên cho tình huống video này để lưu trữ:", defaultFileName);
+        
+        if(fileName) { // Nếu bấm OK
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(varVideoBlob);
+            a.download = fileName + '.webm';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    }
 </script>
 </body>
 </html>
