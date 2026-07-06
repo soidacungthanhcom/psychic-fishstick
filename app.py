@@ -61,6 +61,11 @@ def judge(): return render_template('judge.html')
 @app.route('/viewer')
 def viewer(): return render_template('viewer.html')
 
+@app.route('/var')
+@requires_auth
+def check_var(): 
+    return render_template('var.html')
+    
 # --- NHÓM QUYỀN ---
 @app.route('/admin_quyen')
 @requires_auth
