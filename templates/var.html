@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRẠM VAR - VOVINAM</title>
+    <style>
+        body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .video-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+        .video-box { background: #222; padding: 10px; border-radius: 10px; border: 2px solid #555; }
+        video { width: 100%; max-width: 600px; border-radius: 5px; background: #000; }
+        h3 { margin-top: 0; color: #00ffcc; text-transform: uppercase; }
+        
+        .controls { margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        button { padding: 12px 25px; font-size: 1.2em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #btnStart { background: #cc0000; color: white; }
+        #btnStop { background: #ff9900; color: black; display: none; }
+        #btnDownload { background: #0066cc; color: white; display: none; }
+        
+        /* Bảng điều khiển VAR */
+        .var-tools { background: #333; padding: 15px; border-radius: 10px; margin-top: 15px; display: none; }
+        .speed-btn { background: #444; color: white; margin: 0 5px; padding: 8px 15px; font-size: 1em; }
+        .active-speed { background: #00ffcc; color: black; }
+    </style>
+</head>
+<body>
+
+    <h1 style="color: yellow;">🎥 TRẠM KIỂM TRA VAR VOVINAM</h1>
+
+    <div class="controls">
+        <button id="btnStart" onclick="startRecording()">🔴 BẮT ĐẦU QUAY</button>
+        <button id="btnStop" onclick="stopRecording()">⏹️ DỪNG & XEM VAR</button>
+        <button id="btnDownload" onclick="downloadVideo()">💾 TẢI TÌNH HUỐNG NÀY</button>
+    </div>
+
+    <div class="video-container">
+        <div class="video-box" id="liveBox">
+            <h3>🔴 TRỰC TIẾP TRÊN SÂN</h3>
+            <video id="liveVideo" autoplay playsinline muted></video>
+        </div>
+
+        <div class="video-box" id="replayBox" style="display: none; border-color: #ff9900;">
+            <h3 style="color: #ff9900;">⏪ XEM LẠI VAR</h3>
+            <video id="replayVideo" controls></video>
+            
+            <div class="var-tools" id="varTools">
+                <span>Tốc độ phát: </span>
+                <button class="speed-btn" onclick="setSpeed(1.0, this)">1x (Bình thường)</button>
+                <button class="speed-btn" onclick="setSpeed(0.5, this)">0.5x (Chậm)</button>
+                <button class="speed-btn" onclick="setSpeed(0.25, this)">0.25x (Rất chậm)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let recordedChunks = [];
+        let videoBlob;
+        
+        const liveVideo = document.getElementById('liveVideo');
+        const replayVideo = document.getElementById('replayVideo');
+
+        // Bật Camera ngay khi mở trang
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                liveVideo.srcObject = stream;
+            } catch (err) {
+                alert("Không thể truy cập Camera. Vui lòng cấp quyền trong trình duyệt!");
+            }
+        }
+        initCamera();
+
+        function startRecording() {
+            recordedChunks = [];
+            const stream = liveVideo.srcObject;
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) recordedChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoURL = URL.createObjectURL(videoBlob);
+                replayVideo.src = videoURL;
+                
+                // Chuyển đổi giao diện sang chế độ Xem VAR
+                document.getElementById('replayBox').style.display = 'block';
+                document.getElementById('varTools').style.display = 'block';
+                document.getElementById('btnDownload').style.display = 'inline-block';
+            };
+
+            mediaRecorder.start();
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('btnStop').style.display = 'inline-block';
+            document.getElementById('replayBox').style.display = 'none';
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            document.getElementById('btnStop').style.display = 'none';
+            document.getElementById('btnStart').style.display = 'inline-block';
+            document.getElementById('btnStart').innerText = "🔴 QUAY TRẬN MỚI";
+        }
+
+        function downloadVideo() {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(videoBlob);
+            a.download = 'VAR_Vovinam_' + new Date().getTime() + '.webm';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function setSpeed(rate, btn) {
+            replayVideo.playbackRate = rate;
+            document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active-speed'));
+            btn.classList.add('active-speed');
+        }
+    </script>
+</body>
+</html>
