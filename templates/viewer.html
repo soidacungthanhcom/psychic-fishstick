@@ -2,208 +2,203 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>MÀN HÌNH THI ĐẤU V6.0 - ĐÈN DỌC TỐI ƯU</title>
+    <title>TIVI TRỰC TIẾP - VOVINAM</title>
     <script src="/static/socket.io.js"></script>
     <style>
-        :root {
-            --bg-color: #000;
-            --text-color: #fff;
-            --box-bg: #111;
-            --blue-color: #0055ff;
-            --red-color: #ff0000;
+        body {
+            background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column;
+            overflow: hidden; text-transform: uppercase; user-select: none;
         }
-        body.light-mode { --bg-color: #fff; --text-color: #000; --box-bg: #f0f0f0; }
-        body { margin: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: 0.3s; }
         
-        /* HEADER */
-        .header { height: 15vh; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: #111; border-bottom: 2px solid #333; }
-        .logo img { height: 70px; }
-        .header-center { text-align: center; display: flex; flex-direction: column; justify-content: center; }
-        .round-info { font-size: 2.2em; color: #00ff00; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
-        .category-info { font-size: 1.5em; color: yellow; font-weight: bold; text-transform: uppercase; margin-top: 5px; text-shadow: 0 0 5px #000; }
-
-        /* KHU VỰC THI ĐẤU CHÍNH */
-        .main-board { flex: 1; display: flex; justify-content: space-between; padding: 10px 20px; }
-        .team { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-        .team-name { font-size: 2.5em; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        /* THANH TIÊU ĐỀ TRÊN CÙNG */
+        .header {
+            background: #111; border-bottom: 4px solid #ffcc00; text-align: center;
+            display: flex; justify-content: center; align-items: center; height: 8vh;
+        }
+        .header h1 { margin: 0; font-size: 3.5vh; color: #ffcc00; letter-spacing: 3px; font-weight: 900;}
         
-        /* BỐ CỤC ĐIỂM VÀ ĐÈN NẰM NGANG NHAU */
-        .team-content { display: flex; align-items: center; gap: 20px; margin-top: 10px; }
+        /* BỐ CỤC CHÍNH */
+        .main-content { display: flex; flex: 1; height: 92vh; }
         
-        .score-box { font-size: 15em; font-weight: bold; line-height: 1; padding: 10px; border-radius: 20px; min-width: 320px; text-align: center; background: var(--box-bg); transition: 0.3s; border: 8px solid transparent; }
-        .blue-score { color: var(--blue-color); border-color: var(--blue-color); }
-        .red-score { color: var(--red-color); border-color: var(--red-color); }
-
-        /* KHU VỰC ĐÈN BÁO (XOAY DỌC) */
-        .lights-area { display: flex; gap: 12px; } 
-        .lights-column { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .label-light { font-size: 1.2em; opacity: 0.9; font-weight: bold; text-transform: uppercase; }
-        .light-row { display: flex; flex-direction: column; gap: 8px; } 
+        /* KHU VỰC VĐV (XANH / ĐỎ) */
+        .team {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 3vh 2vw; border: 1vw solid transparent; padding-top: 5vh;
+        }
+        .team-blue { background: linear-gradient(180deg, #001f4d 0%, #000 100%); }
+        .team-red { background: linear-gradient(180deg, #4d0000 0%, #000 100%); }
         
-        .light { width: 35px; height: 35px; border-radius: 50%; background: #222; border: 2px solid #444; transition: 0.1s; }
-        body.light-mode .light { background: #ddd; border: 2px solid #999; }
+        .athlete-name { font-size: 7vh; font-weight: 900; text-align: center; line-height: 1.1; margin-bottom: 1vh; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .athlete-unit { font-size: 3.5vh; color: #ccc; margin-bottom: 2vh; font-weight: bold;}
+        
+        /* ĐIỂM SỐ KHỔNG LỒ */
+        .score {
+            font-size: 45vh; font-weight: 900; line-height: 1; margin: 2vh 0;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .score-blue { color: #3399ff; }
+        .score-red { color: #ff4d4d; }
+        
+        /* CỤM ĐÈN BÁO LỖI */
+        .warnings-container { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 5vh;}
+        .warn-title { font-size: 2.5vh; color: #888; margin-bottom: 1.5vh; letter-spacing: 2px;}
+        .warnings { display: flex; gap: 2vw; }
+        .warn-circle { width: 5vh; height: 5vh; border-radius: 50%; border: 4px solid #444; background: #111; transition: 0.3s;}
+        .warn-active { background: #ffcc00; border-color: #fff; box-shadow: 0 0 25px #ffcc00;}
+        
+        /* CỘT ĐIỀU KHIỂN TRUNG TÂM */
+        .center-col {
+            width: 25vw; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #0a0a0a; border-left: 3px solid #333; border-right: 3px solid #333; padding: 2vh 0; gap: 4vh;
+        }
+        
+        .category-box { font-size: 3vh; color: #aaa; text-align: center; padding: 0 1vw; font-weight: bold;}
+        .round-box { font-size: 6vh; color: #00ffcc; font-weight: 900; text-align: center; letter-spacing: 2px;}
+        
+        .timer-box { 
+            font-size: 11vh; color: yellow; font-weight: bold; background: #111; 
+            padding: 2vh 2vw; border-radius: 2vh; border: 4px solid #444; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8); line-height: 1; font-family: monospace;
+        }
 
-        /* Cột số Giám Định - Khớp chiều cao với đèn (35px + 4px viền = 39px) */
-        .judge-num { height: 39px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3em; color: #888; }
-
-        /* MÀU SẮC ĐỒNG BỘ THEO ĐIỂM SỐ */
-        /* Tay (+1) = Màu Vàng (#ffe600) | Chân (+2) = Màu Xanh (#00e5ff) */
-        .light.active-blue-1 { background: #ffe600 !important; box-shadow: 0 0 20px #ffe600; border-color: #fff; }
-        .light.active-blue-2 { background: #00e5ff !important; box-shadow: 0 0 20px #00e5ff; border-color: #fff; }
-
-        .light.active-red-1 { background: #ffe600 !important; box-shadow: 0 0 20px #ffe600; border-color: #fff; }
-        .light.active-red-2 { background: #00e5ff !important; box-shadow: 0 0 20px #00e5ff; border-color: #fff; }
-
-        /* ĐỒNG HỒ Ở GIỮA */
-        .center-area { width: 220px; text-align: center; margin-top: 40px; }
-        .timer { font-size: 5em; font-weight: bold; color: yellow !important; background: #000 !important; border: 4px solid #555; border-radius: 15px; padding: 10px 0; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-
-        @keyframes blink-blue { 0% { background-color: var(--box-bg); color: var(--blue-color); } 50% { background-color: var(--blue-color); color: #fff; } 100% { background-color: var(--box-bg); color: var(--blue-color); } }
-        @keyframes blink-red { 0% { background-color: var(--box-bg); color: var(--red-color); } 50% { background-color: var(--red-color); color: #fff; } 100% { background-color: var(--box-bg); color: var(--red-color); } }
-        .winner-blue { animation: blink-blue 0.5s infinite; border-color: #fff !important; }
-        .winner-red { animation: blink-red 0.5s infinite; border-color: #fff !important; }
+        /* MÀN HÌNH CHÚC MỪNG CHIẾN THẮNG */
+        #winnerOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        #winnerText { font-size: 15vh; font-weight: 900; color: yellow; text-shadow: 0 0 50px yellow; text-align: center; line-height: 1.2;}
+        .winner-sub { font-size: 6vh; color: #fff; margin-top: 3vh;}
     </style>
 </head>
 <body>
+
     <div class="header">
-        <div class="logo"><img src="/static/logo.png" onerror="this.style.opacity=0"></div>
-        <div class="header-center">
-            <div class="round-info" id="roundDisplay">CHUẨN BỊ</div>
-            <div class="category-info" id="categoryDisplay">---</div>
-        </div>
-        <div class="logo" style="opacity:0"><img src="/static/logo.png"></div>
+        <h1>HỆ THỐNG ĐIỀU HÀNH GIẢI VOVINAM</h1>
     </div>
 
-    <div class="main-board">
-        <div class="team">
-            <div class="team-name" style="color: var(--blue-color)" id="nameBlue">XANH</div>
-            <div style="color: #ff9900; font-size: 1.5em; font-weight: bold; margin-bottom: 5px;" id="viewWarnBlue">Lỗi: 0/3</div>
+    <div class="main-content">
+        <div class="team team-blue">
+            <div class="athlete-name blue-text" id="nameBlue">VĐV XANH</div>
+            <div class="athlete-unit" id="unitBlue">ĐƠN VỊ</div>
+            <div class="score score-blue" id="scoreBlue">0</div>
             
-            <div class="team-content">
-                <div class="lights-area">
-                    <div class="lights-column">
-                        <span class="label-light" style="color: #ffe600;">T1</span>
-                        <div class="light-row" id="row_b1"><div class="light" id="l_b1_1"></div><div class="light" id="l_b1_2"></div><div class="light" id="l_b1_3"></div><div class="light" id="l_b1_4"></div><div class="light" id="l_b1_5"></div></div>
-                    </div>
-                    <div class="lights-column">
-                        <span class="label-light" style="color: #888;">GĐ</span>
-                        <div class="light-row">
-                            <div class="judge-num">1</div>
-                            <div class="judge-num">2</div>
-                            <div class="judge-num">3</div>
-                            <div class="judge-num">4</div>
-                            <div class="judge-num">5</div>
-                        </div>
-                    </div>
-                    <div class="lights-column">
-                        <span class="label-light" style="color: #00e5ff;">C2</span>
-                        <div class="light-row" id="row_b2"><div class="light" id="l_b2_1"></div><div class="light" id="l_b2_2"></div><div class="light" id="l_b2_3"></div><div class="light" id="l_b2_4"></div><div class="light" id="l_b2_5"></div></div>
-                    </div>
+            <div class="warnings-container">
+                <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
+                <div class="warnings">
+                    <div class="warn-circle" id="bw1"></div>
+                    <div class="warn-circle" id="bw2"></div>
+                    <div class="warn-circle" id="bw3"></div>
                 </div>
-                <div class="score-box blue-score" id="scoreBlue">0</div>
             </div>
         </div>
 
-        <div class="center-area">
-            <div class="timer" id="timer">00:00</div>
+        <div class="center-col">
+            <div class="category-box" id="category">HẠNG CÂN / NỘI DUNG</div>
+            <div class="round-box" id="roundDisplay">HIỆP 1</div>
+            <div class="timer-box" id="timer">02:00</div>
+            
+            <div style="display: flex; gap: 1vw; margin-top: 2vh;">
+                <div style="width: 2vh; height: 2vh; background: red; border-radius: 50%; box-shadow: 0 0 10px red; animation: blink 1s infinite;"></div>
+                <div style="font-size: 2vh; color: #888;">LIVE VAR</div>
+            </div>
         </div>
 
-        <div class="team">
-            <div class="team-name" style="color: var(--red-color)" id="nameRed">ĐỎ</div>
-            <div style="color: #ff9900; font-size: 1.5em; font-weight: bold; margin-bottom: 5px;" id="viewWarnRed">Lỗi: 0/3</div>
-
-            <div class="team-content">
-                <div class="score-box red-score" id="scoreRed">0</div>
-                <div class="lights-area">
-                    <div class="lights-column">
-                        <span class="label-light" style="color: #ffe600;">T1</span>
-                        <div class="light-row" id="row_r1"><div class="light" id="l_r1_1"></div><div class="light" id="l_r1_2"></div><div class="light" id="l_r1_3"></div><div class="light" id="l_r1_4"></div><div class="light" id="l_r1_5"></div></div>
-                    </div>
-                    <div class="lights-column">
-                        <span class="label-light" style="color: #888;">GĐ</span>
-                        <div class="light-row">
-                            <div class="judge-num">1</div>
-                            <div class="judge-num">2</div>
-                            <div class="judge-num">3</div>
-                            <div class="judge-num">4</div>
-                            <div class="judge-num">5</div>
-                        </div>
-                    </div>
-                    <div class="lights-column">
-                        <span class="label-light" style="color: #00e5ff;">C2</span>
-                        <div class="light-row" id="row_r2"><div class="light" id="l_r2_1"></div><div class="light" id="l_r2_2"></div><div class="light" id="l_r2_3"></div><div class="light" id="l_r2_4"></div><div class="light" id="l_r2_5"></div></div>
-                    </div>
+        <div class="team team-red">
+            <div class="athlete-name red-text" id="nameRed">VĐV ĐỎ</div>
+            <div class="athlete-unit" id="unitRed">ĐƠN VỊ</div>
+            <div class="score score-red" id="scoreRed">0</div>
+            
+            <div class="warnings-container">
+                <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
+                <div class="warnings">
+                    <div class="warn-circle" id="rw1"></div>
+                    <div class="warn-circle" id="rw2"></div>
+                    <div class="warn-circle" id="rw3"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <audio id="buzzerSound" src="/static/buzzer.mp3" preload="auto"></audio>
+    <div id="winnerOverlay" onclick="this.style.display='none'">
+        <div id="winnerText">XANH THẮNG</div>
+        <div class="winner-sub">CHÚC MỪNG VẬN ĐỘNG VIÊN</div>
+    </div>
+
+    <style>
+        @keyframes blink { 50% { opacity: 0.2; } }
+    </style>
 
     <script>
         var socket = io();
 
+        // Cập nhật thông tin từ Admin
         socket.on('viewer_receive_update', function(data) {
             if(data.type === 'info') {
-                document.getElementById('nameBlue').innerText = data.blueName;
-                document.getElementById('nameRed').innerText = data.redName;
-                document.getElementById('roundDisplay').innerText = data.round;
-                document.getElementById('categoryDisplay').innerText = data.category || "";
-                resetEffects();
+                document.getElementById('nameBlue').innerText = data.blueName || 'XANH';
+                document.getElementById('unitBlue').innerText = data.blueUnit || '---';
+                document.getElementById('nameRed').innerText = data.redName || 'ĐỎ';
+                document.getElementById('unitRed').innerText = data.redUnit || '---';
+                document.getElementById('roundDisplay').innerText = data.round || 'HIỆP 1';
+                document.getElementById('category').innerText = data.category || 'NỘI DUNG THI ĐẤU';
+                document.getElementById('winnerOverlay').style.display = 'none'; // Ẩn màn hình win nếu có
             }
-            if(data.type === 'score') {
+            else if(data.type === 'score') {
                 document.getElementById('scoreBlue').innerText = data.blue;
                 document.getElementById('scoreRed').innerText = data.red;
             }
-            
-            // Xử lý Timer và Còi
-            if(data.type === 'timer') {
+            else if(data.type === 'timer') {
                 document.getElementById('timer').innerText = data.timeStr;
-                if(data.timeStr === "00:00") {
-                    let audio = document.getElementById('buzzerSound');
-                    if(audio) audio.play().catch(e => console.log("Lỗi tự động phát âm thanh còi"));
+            }
+            else if(data.type === 'warning') {
+                // Xử lý đèn báo lỗi XANH
+                for(let i=1; i<=3; i++) {
+                    let w = document.getElementById('bw'+i);
+                    if(i <= data.blueWarn) w.classList.add('warn-active');
+                    else w.classList.remove('warn-active');
+                }
+                // Xử lý đèn báo lỗi ĐỎ
+                for(let i=1; i<=3; i++) {
+                    let w = document.getElementById('rw'+i);
+                    if(i <= data.redWarn) w.classList.add('warn-active');
+                    else w.classList.remove('warn-active');
                 }
             }
-            
-            if(data.type === 'theme') {
-                if(data.mode === 'light') document.body.classList.add('light-mode');
-                else document.body.classList.remove('light-mode');
-            }
-            
-            // Xử lý Cảnh cáo
-            if(data.type === 'warning') {
-                document.getElementById('viewWarnBlue').innerText = `Lỗi: ${data.blueWarn}/3`;
-                document.getElementById('viewWarnRed').innerText = `Lỗi: ${data.redWarn}/3`;
-            }
-            
-            if(data.type === 'reset') {
-                resetEffects();
+            else if(data.type === 'reset') {
+                document.getElementById('scoreBlue').innerText = 0;
+                document.getElementById('scoreRed').innerText = 0;
+                document.getElementById('timer').innerText = "02:00";
+                document.getElementById('winnerOverlay').style.display = 'none';
+                
+                // Tắt hết đèn cảnh cáo
+                for(let i=1; i<=3; i++) {
+                    document.getElementById('bw'+i).classList.remove('warn-active');
+                    document.getElementById('rw'+i).classList.remove('warn-active');
+                }
             }
         });
 
-        // HÀM NHẬN VÀ NHÁY ĐÈN THEO MÀU
-        socket.on('server_send_vote', function(d) {
-            let sideCode = d.side === 'blue' ? 'b' : 'r';
-            let lightId = `l_${sideCode}${d.points}_${d.judge_id}`;
-            let light = document.getElementById(lightId);
-            
-            let colorClass = `active-${d.side}-${d.points}`;
-
-            if(light) {
-                light.classList.add(colorClass);
-                setTimeout(() => light.classList.remove(colorClass), 800);
-            }
-        });
-
+        // Hưởng ứng khi kết thúc trận
         socket.on('viewer_finish', function(data) {
-            if(data.winner === 'XANH') document.getElementById('scoreBlue').classList.add('winner-blue');
-            if(data.winner === 'ĐỎ') document.getElementById('scoreRed').classList.add('winner-red');
+            let overlay = document.getElementById('winnerOverlay');
+            let text = document.getElementById('winnerText');
+            overlay.style.display = 'flex';
+            
+            if(data.winner === 'XANH') {
+                text.innerText = "XANH CHIẾN THẮNG";
+                text.style.color = "#3399ff";
+                text.style.textShadow = "0 0 50px #3399ff";
+            } else if(data.winner === 'ĐỎ') {
+                text.innerText = "ĐỎ CHIẾN THẮNG";
+                text.style.color = "#ff4d4d";
+                text.style.textShadow = "0 0 50px #ff4d4d";
+            } else {
+                text.innerText = "KẾT QUẢ HÒA";
+                text.style.color = "yellow";
+                text.style.textShadow = "0 0 50px yellow";
+            }
         });
-
-        function resetEffects() {
-            document.getElementById('scoreBlue').classList.remove('winner-blue');
-            document.getElementById('scoreRed').classList.remove('winner-red');
-        }
     </script>
 </body>
 </html>
