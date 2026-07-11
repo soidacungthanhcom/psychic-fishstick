@@ -11,40 +11,56 @@
             overflow: hidden; text-transform: uppercase; user-select: none;
         }
         
-        /* THANH TIÊU ĐỀ TRÊN CÙNG */
+        /* THANH TIÊU ĐỀ TRÊN CÙNG (CÓ LOGO) */
         .header {
-            background: #111; border-bottom: 4px solid #ffcc00; text-align: center;
-            display: flex; justify-content: center; align-items: center; height: 8vh;
+            background: #111; border-bottom: 4px solid #ffcc00; 
+            display: flex; justify-content: space-between; align-items: center; height: 9vh;
         }
-        .header h1 { margin: 0; font-size: 3.5vh; color: #ffcc00; letter-spacing: 3px; font-weight: 900;}
+        .logo-box { width: 20vw; display: flex; align-items: center; justify-content: center; height: 100%; }
+        .logo-box img { max-height: 7.5vh; object-fit: contain; filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.3));}
+        .header h1 { margin: 0; flex: 1; text-align: center; font-size: 3.5vh; color: #ffcc00; letter-spacing: 3px; font-weight: 900;}
         
         /* BỐ CỤC CHÍNH */
-        .main-content { display: flex; flex: 1; height: 92vh; }
+        .main-content { display: flex; flex: 1; height: 91vh; }
         
         /* KHU VỰC VĐV (XANH / ĐỎ) */
         .team {
             flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            padding: 3vh 2vw; border: 1vw solid transparent; padding-top: 5vh;
+            padding: 2vh 2vw; border: 1vw solid transparent; padding-top: 3vh;
         }
         .team-blue { background: linear-gradient(180deg, #001f4d 0%, #000 100%); }
         .team-red { background: linear-gradient(180deg, #4d0000 0%, #000 100%); }
         
-        .athlete-name { font-size: 7vh; font-weight: 900; text-align: center; line-height: 1.1; margin-bottom: 1vh; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .athlete-unit { font-size: 3.5vh; color: #ccc; margin-bottom: 2vh; font-weight: bold;}
+        .athlete-name { font-size: 6.5vh; font-weight: 900; text-align: center; line-height: 1.1; margin-bottom: 0.5vh; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .athlete-unit { font-size: 3vh; color: #ccc; margin-bottom: 1vh; font-weight: bold;}
         
         /* ĐIỂM SỐ KHỔNG LỒ */
         .score {
-            font-size: 45vh; font-weight: 900; line-height: 1; margin: 2vh 0;
+            font-size: 38vh; font-weight: 900; line-height: 1; margin: 1vh 0;
             text-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
         .score-blue { color: #3399ff; }
         .score-red { color: #ff4d4d; }
+
+        /* HỆ THỐNG ĐÈN GIÁM ĐỊNH TRÊN TIVI */
+        .viewer-lights {
+            width: 85%; background: rgba(0,0,0,0.6); padding: 2vh; border-radius: 2vh; border: 2px solid #333; margin-bottom: 2vh;
+        }
+        .vl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5vh; }
+        .vl-row:last-child { margin-bottom: 0; }
+        .vl-label { font-size: 2.2vh; font-weight: bold; color: #aaa; width: 15vw; text-align: left; }
+        .vl-circles { display: flex; gap: 1.2vw; justify-content: flex-end; flex: 1;}
+        .v-light { width: 3vh; height: 3vh; background: #222; border-radius: 50%; border: 2px solid #555; transition: 0.15s; }
+        
+        /* Hiệu ứng Đèn lóe sáng */
+        .on-blue { background: #0055ff !important; box-shadow: 0 0 25px #0055ff, inset 0 0 10px white; border-color: white; transform: scale(1.2);}
+        .on-red { background: #ff0000 !important; box-shadow: 0 0 25px #ff0000, inset 0 0 10px white; border-color: white; transform: scale(1.2);}
         
         /* CỤM ĐÈN BÁO LỖI */
-        .warnings-container { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 5vh;}
-        .warn-title { font-size: 2.5vh; color: #888; margin-bottom: 1.5vh; letter-spacing: 2px;}
+        .warnings-container { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 2vh;}
+        .warn-title { font-size: 2.2vh; color: #888; margin-bottom: 1.5vh; letter-spacing: 2px;}
         .warnings { display: flex; gap: 2vw; }
-        .warn-circle { width: 5vh; height: 5vh; border-radius: 50%; border: 4px solid #444; background: #111; transition: 0.3s;}
+        .warn-circle { width: 4.5vh; height: 4.5vh; border-radius: 50%; border: 4px solid #444; background: #111; transition: 0.3s;}
         .warn-active { background: #ffcc00; border-color: #fff; box-shadow: 0 0 25px #ffcc00;}
         
         /* CỘT ĐIỀU KHIỂN TRUNG TÂM */
@@ -75,14 +91,42 @@
 <body>
 
     <div class="header">
+        <!-- BÊN TRÁI: LOGO CLB HOẶC GIẢI ĐẤU -->
+        <div class="logo-box">
+            <!-- Hướng dẫn: Đổi link trong thẻ src="" thành link ảnh của bạn -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo Trai">
+        </div>
+        
         <h1>HỆ THỐNG ĐIỀU HÀNH GIẢI VOVINAM</h1>
+        
+        <!-- BÊN PHẢI: LOGO NHÀ TÀI TRỢ HOẶC ẢNH KHÁC (CÓ THỂ XÓA NẾU KHÔNG CẦN) -->
+        <div class="logo-box">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo Phai">
+        </div>
     </div>
 
     <div class="main-content">
+        <!-- ================= BÊN XANH ================= -->
         <div class="team team-blue">
             <div class="athlete-name blue-text" id="nameBlue">VĐV XANH</div>
             <div class="athlete-unit" id="unitBlue">ĐƠN VỊ</div>
             <div class="score score-blue" id="scoreBlue">0</div>
+            
+            <!-- ĐÈN GIÁM ĐỊNH XANH -->
+            <div class="viewer-lights">
+                <div class="vl-row">
+                    <span class="vl-label blue-text">ĐIỂM TAY (+1)</span>
+                    <div class="vl-circles">
+                        <div class="v-light" id="vw_l_b1_1"></div><div class="v-light" id="vw_l_b1_2"></div><div class="v-light" id="vw_l_b1_3"></div><div class="v-light" id="vw_l_b1_4"></div><div class="v-light" id="vw_l_b1_5"></div>
+                    </div>
+                </div>
+                <div class="vl-row">
+                    <span class="vl-label blue-text">ĐIỂM CHÂN (+2)</span>
+                    <div class="vl-circles">
+                        <div class="v-light" id="vw_l_b2_1"></div><div class="v-light" id="vw_l_b2_2"></div><div class="v-light" id="vw_l_b2_3"></div><div class="v-light" id="vw_l_b2_4"></div><div class="v-light" id="vw_l_b2_5"></div>
+                    </div>
+                </div>
+            </div>
             
             <div class="warnings-container">
                 <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
@@ -94,6 +138,7 @@
             </div>
         </div>
 
+        <!-- ================= TRUNG TÂM ================= -->
         <div class="center-col">
             <div class="category-box" id="category">HẠNG CÂN / NỘI DUNG</div>
             <div class="round-box" id="roundDisplay">HIỆP 1</div>
@@ -101,14 +146,31 @@
             
             <div style="display: flex; gap: 1vw; margin-top: 2vh;">
                 <div style="width: 2vh; height: 2vh; background: red; border-radius: 50%; box-shadow: 0 0 10px red; animation: blink 1s infinite;"></div>
-                <div style="font-size: 2vh; color: #888;">LIVE VAR</div>
+                <div style="font-size: 2vh; color: #888; font-weight: bold;">HỆ THỐNG VAR SẴN SÀNG</div>
             </div>
         </div>
 
+        <!-- ================= BÊN ĐỎ ================= -->
         <div class="team team-red">
             <div class="athlete-name red-text" id="nameRed">VĐV ĐỎ</div>
             <div class="athlete-unit" id="unitRed">ĐƠN VỊ</div>
             <div class="score score-red" id="scoreRed">0</div>
+            
+            <!-- ĐÈN GIÁM ĐỊNH ĐỎ -->
+            <div class="viewer-lights">
+                <div class="vl-row">
+                    <span class="vl-label red-text">ĐIỂM TAY (+1)</span>
+                    <div class="vl-circles">
+                        <div class="v-light" id="vw_l_r1_1"></div><div class="v-light" id="vw_l_r1_2"></div><div class="v-light" id="vw_l_r1_3"></div><div class="v-light" id="vw_l_r1_4"></div><div class="v-light" id="vw_l_r1_5"></div>
+                    </div>
+                </div>
+                <div class="vl-row">
+                    <span class="vl-label red-text">ĐIỂM CHÂN (+2)</span>
+                    <div class="vl-circles">
+                        <div class="v-light" id="vw_l_r2_1"></div><div class="v-light" id="vw_l_r2_2"></div><div class="v-light" id="vw_l_r2_3"></div><div class="v-light" id="vw_l_r2_4"></div><div class="v-light" id="vw_l_r2_5"></div>
+                    </div>
+                </div>
+            </div>
             
             <div class="warnings-container">
                 <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
@@ -121,6 +183,7 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH KẾT THÚC TRẬN -->
     <div id="winnerOverlay" onclick="this.style.display='none'">
         <div id="winnerText">XANH THẮNG</div>
         <div class="winner-sub">CHÚC MỪNG VẬN ĐỘNG VIÊN</div>
@@ -133,7 +196,7 @@
     <script>
         var socket = io();
 
-        // Cập nhật thông tin từ Admin
+        // --- CẬP NHẬT THÔNG TIN TỪ ADMIN ---
         socket.on('viewer_receive_update', function(data) {
             if(data.type === 'info') {
                 document.getElementById('nameBlue').innerText = data.blueName || 'XANH';
@@ -142,7 +205,7 @@
                 document.getElementById('unitRed').innerText = data.redUnit || '---';
                 document.getElementById('roundDisplay').innerText = data.round || 'HIỆP 1';
                 document.getElementById('category').innerText = data.category || 'NỘI DUNG THI ĐẤU';
-                document.getElementById('winnerOverlay').style.display = 'none'; // Ẩn màn hình win nếu có
+                document.getElementById('winnerOverlay').style.display = 'none'; 
             }
             else if(data.type === 'score') {
                 document.getElementById('scoreBlue').innerText = data.blue;
@@ -152,13 +215,11 @@
                 document.getElementById('timer').innerText = data.timeStr;
             }
             else if(data.type === 'warning') {
-                // Xử lý đèn báo lỗi XANH
                 for(let i=1; i<=3; i++) {
                     let w = document.getElementById('bw'+i);
                     if(i <= data.blueWarn) w.classList.add('warn-active');
                     else w.classList.remove('warn-active');
                 }
-                // Xử lý đèn báo lỗi ĐỎ
                 for(let i=1; i<=3; i++) {
                     let w = document.getElementById('rw'+i);
                     if(i <= data.redWarn) w.classList.add('warn-active');
@@ -171,7 +232,6 @@
                 document.getElementById('timer').innerText = "02:00";
                 document.getElementById('winnerOverlay').style.display = 'none';
                 
-                // Tắt hết đèn cảnh cáo
                 for(let i=1; i<=3; i++) {
                     document.getElementById('bw'+i).classList.remove('warn-active');
                     document.getElementById('rw'+i).classList.remove('warn-active');
@@ -179,7 +239,20 @@
             }
         });
 
-        // Hưởng ứng khi kết thúc trận
+        // --- ĐỒNG BỘ ĐÈN BÁO GIÁM ĐỊNH BẤM ---
+        socket.on('server_send_vote', function(d) {
+            let sideCode = d.side === 'blue' ? 'b' : 'r';
+            let lightId = `vw_l_${sideCode}${d.points}_${d.judge_id}`;
+            let light = document.getElementById(lightId);
+            let colorClass = d.side === 'blue' ? 'on-blue' : 'on-red';
+            
+            if(light) { 
+                light.classList.add(colorClass); 
+                setTimeout(() => light.classList.remove(colorClass), 700); 
+            }
+        });
+
+        // --- HƯỞNG ỨNG KHI KẾT THÚC TRẬN ---
         socket.on('viewer_finish', function(data) {
             let overlay = document.getElementById('winnerOverlay');
             let text = document.getElementById('winnerText');
