@@ -11,7 +11,7 @@
             overflow: hidden; text-transform: uppercase; user-select: none;
         }
         
-        /* THANH TIÊU ĐỀ TRÊN CÙNG (CÓ LOGO) */
+        /* THANH TIÊU ĐỀ */
         .header {
             background: #111; border-bottom: 4px solid #ffcc00; 
             display: flex; justify-content: space-between; align-items: center; height: 9vh;
@@ -23,15 +23,20 @@
         /* BỐ CỤC CHÍNH */
         .main-content { display: flex; flex: 1; height: 91vh; }
         
-        /* KHU VỰC VĐV (XANH / ĐỎ) */
+        /* KHU VỰC VĐV (Bố cục ngang để nhét dàn đèn ra mép) */
         .team {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            padding: 2vh 2vw; border: 1vw solid transparent; padding-top: 3vh;
+            flex: 1; display: flex; flex-direction: row; justify-content: space-between;
+            padding: 2vh 1vw; padding-top: 3vh;
         }
         .team-blue { background: linear-gradient(180deg, #001f4d 0%, #000 100%); }
         .team-red { background: linear-gradient(180deg, #4d0000 0%, #000 100%); }
         
-        .athlete-name { font-size: 6.5vh; font-weight: 900; text-align: center; line-height: 1.1; margin-bottom: 0.5vh; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        /* KHU VỰC HIỂN THỊ CHÍNH GIỮA CỦA MỖI BÊN */
+        .team-inner {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 0 1vw;
+        }
+        .athlete-name { font-size: 5.5vh; font-weight: 900; text-align: center; line-height: 1.1; margin-bottom: 0.5vh; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .athlete-unit { font-size: 3vh; color: #ccc; margin-bottom: 1vh; font-weight: bold;}
         
         /* ĐIỂM SỐ KHỔNG LỒ */
@@ -42,43 +47,54 @@
         .score-blue { color: #3399ff; }
         .score-red { color: #ff4d4d; }
 
-        /* HỆ THỐNG ĐÈN GIÁM ĐỊNH TRÊN TIVI */
-        .viewer-lights {
-            width: 85%; background: rgba(0,0,0,0.6); padding: 2vh; border-radius: 2vh; border: 2px solid #333; margin-bottom: 2vh;
+        /* ================================================= */
+        /* DÀN ĐÈN GIÁM ĐỊNH NẰM DỌC Ở 2 MÉP MÀN HÌNH */
+        /* ================================================= */
+        .outer-lights {
+            display: flex; gap: 1vw; padding: 2vh 1vw; background: rgba(255,255,255,0.05); 
+            border-radius: 1vh; border: 1px solid #333; height: 75vh; box-sizing: border-box;
         }
-        .vl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5vh; }
-        .vl-row:last-child { margin-bottom: 0; }
-        .vl-label { font-size: 2.2vh; font-weight: bold; color: #aaa; width: 15vw; text-align: left; }
-        .vl-circles { display: flex; gap: 1.2vw; justify-content: flex-end; flex: 1;}
-        .v-light { width: 3vh; height: 3vh; background: #222; border-radius: 50%; border: 2px solid #555; transition: 0.15s; }
+        .light-col { display: flex; flex-direction: column; gap: 3vh; align-items: center; justify-content: flex-start; }
+        .light-title { font-size: 2.5vh; font-weight: 900; margin-bottom: 1vh; text-shadow: 0 0 10px currentColor;}
+        .v-light { 
+            width: 5.5vh; height: 5.5vh; background: #111; border-radius: 50%; border: 3px solid #444; 
+            display: flex; align-items: center; justify-content: center; font-size: 2.5vh; 
+            color: #555; font-weight: bold; transition: 0.1s;
+        }
         
-        /* Hiệu ứng Đèn lóe sáng */
-        .on-blue { background: #0055ff !important; box-shadow: 0 0 25px #0055ff, inset 0 0 10px white; border-color: white; transform: scale(1.2);}
-        .on-red { background: #ff0000 !important; box-shadow: 0 0 25px #ff0000, inset 0 0 10px white; border-color: white; transform: scale(1.2);}
+        /* HIỆU ỨNG MÀU SẮC ĐÈN (VÀNG = +1, XANH LAM = +2) */
+        .on-yellow { 
+            background: #ffcc00 !important; color: #000 !important; 
+            box-shadow: 0 0 35px #ffcc00, inset 0 0 15px white; 
+            border-color: white; transform: scale(1.15);
+        }
+        .on-cyan { 
+            background: #00ffcc !important; color: #000 !important; 
+            box-shadow: 0 0 35px #00ffcc, inset 0 0 15px white; 
+            border-color: white; transform: scale(1.15);
+        }
         
-        /* CỤM ĐÈN BÁO LỖI */
+        /* CỤM ĐÈN BÁO LỖI (Nằm dưới điểm số) */
         .warnings-container { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 2vh;}
         .warn-title { font-size: 2.2vh; color: #888; margin-bottom: 1.5vh; letter-spacing: 2px;}
         .warnings { display: flex; gap: 2vw; }
         .warn-circle { width: 4.5vh; height: 4.5vh; border-radius: 50%; border: 4px solid #444; background: #111; transition: 0.3s;}
-        .warn-active { background: #ffcc00; border-color: #fff; box-shadow: 0 0 25px #ffcc00;}
+        .warn-active { background: #ff9900; border-color: #fff; box-shadow: 0 0 25px #ff9900;}
         
         /* CỘT ĐIỀU KHIỂN TRUNG TÂM */
         .center-col {
             width: 25vw; display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: #0a0a0a; border-left: 3px solid #333; border-right: 3px solid #333; padding: 2vh 0; gap: 4vh;
         }
-        
         .category-box { font-size: 3vh; color: #aaa; text-align: center; padding: 0 1vw; font-weight: bold;}
         .round-box { font-size: 6vh; color: #00ffcc; font-weight: 900; text-align: center; letter-spacing: 2px;}
-        
         .timer-box { 
             font-size: 11vh; color: yellow; font-weight: bold; background: #111; 
             padding: 2vh 2vw; border-radius: 2vh; border: 4px solid #444; 
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8); line-height: 1; font-family: monospace;
         }
 
-        /* MÀN HÌNH CHÚC MỪNG CHIẾN THẮNG */
+        /* MÀN HÌNH KẾT THÚC TRẬN */
         #winnerOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 1000; display: none;
@@ -91,49 +107,41 @@
 <body>
 
     <div class="header">
-        <!-- BÊN TRÁI: LOGO CLB HOẶC GIẢI ĐẤU -->
         <div class="logo-box">
-            <!-- Hướng dẫn: Đổi link trong thẻ src="" thành link ảnh của bạn -->
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo Trai">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo">
         </div>
-        
         <h1>HỆ THỐNG ĐIỀU HÀNH GIẢI VOVINAM</h1>
-        
-        <!-- BÊN PHẢI: LOGO NHÀ TÀI TRỢ HOẶC ẢNH KHÁC (CÓ THỂ XÓA NẾU KHÔNG CẦN) -->
         <div class="logo-box">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo Phai">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo">
         </div>
     </div>
 
     <div class="main-content">
         <!-- ================= BÊN XANH ================= -->
         <div class="team team-blue">
-            <div class="athlete-name blue-text" id="nameBlue">VĐV XANH</div>
-            <div class="athlete-unit" id="unitBlue">ĐƠN VỊ</div>
-            <div class="score score-blue" id="scoreBlue">0</div>
-            
-            <!-- ĐÈN GIÁM ĐỊNH XANH -->
-            <div class="viewer-lights">
-                <div class="vl-row">
-                    <span class="vl-label blue-text">ĐIỂM TAY (+1)</span>
-                    <div class="vl-circles">
-                        <div class="v-light" id="vw_l_b1_1"></div><div class="v-light" id="vw_l_b1_2"></div><div class="v-light" id="vw_l_b1_3"></div><div class="v-light" id="vw_l_b1_4"></div><div class="v-light" id="vw_l_b1_5"></div>
-                    </div>
+            <!-- ĐÈN GIÁM ĐỊNH NẰM SÁT MÉP TRÁI -->
+            <div class="outer-lights">
+                <div class="light-col">
+                    <div class="light-title" style="color: #ffcc00;">TAY</div>
+                    <div class="v-light" id="vw_l_b1_1">1</div><div class="v-light" id="vw_l_b1_2">2</div><div class="v-light" id="vw_l_b1_3">3</div><div class="v-light" id="vw_l_b1_4">4</div><div class="v-light" id="vw_l_b1_5">5</div>
                 </div>
-                <div class="vl-row">
-                    <span class="vl-label blue-text">ĐIỂM CHÂN (+2)</span>
-                    <div class="vl-circles">
-                        <div class="v-light" id="vw_l_b2_1"></div><div class="v-light" id="vw_l_b2_2"></div><div class="v-light" id="vw_l_b2_3"></div><div class="v-light" id="vw_l_b2_4"></div><div class="v-light" id="vw_l_b2_5"></div>
-                    </div>
+                <div class="light-col">
+                    <div class="light-title" style="color: #00ffcc;">CHÂN</div>
+                    <div class="v-light" id="vw_l_b2_1">1</div><div class="v-light" id="vw_l_b2_2">2</div><div class="v-light" id="vw_l_b2_3">3</div><div class="v-light" id="vw_l_b2_4">4</div><div class="v-light" id="vw_l_b2_5">5</div>
                 </div>
             </div>
             
-            <div class="warnings-container">
-                <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
-                <div class="warnings">
-                    <div class="warn-circle" id="bw1"></div>
-                    <div class="warn-circle" id="bw2"></div>
-                    <div class="warn-circle" id="bw3"></div>
+            <!-- THÔNG TIN VĐV XANH -->
+            <div class="team-inner">
+                <div class="athlete-name blue-text" id="nameBlue">VĐV XANH</div>
+                <div class="athlete-unit" id="unitBlue">ĐƠN VỊ</div>
+                <div class="score score-blue" id="scoreBlue">0</div>
+                
+                <div class="warnings-container">
+                    <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
+                    <div class="warnings">
+                        <div class="warn-circle" id="bw1"></div><div class="warn-circle" id="bw2"></div><div class="warn-circle" id="bw3"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,40 +152,37 @@
             <div class="round-box" id="roundDisplay">HIỆP 1</div>
             <div class="timer-box" id="timer">02:00</div>
             
-            <div style="display: flex; gap: 1vw; margin-top: 2vh;">
+            <div style="display: flex; gap: 1vw; margin-top: 2vh; align-items: center;">
                 <div style="width: 2vh; height: 2vh; background: red; border-radius: 50%; box-shadow: 0 0 10px red; animation: blink 1s infinite;"></div>
-                <div style="font-size: 2vh; color: #888; font-weight: bold;">HỆ THỐNG VAR SẴN SÀNG</div>
+                <div style="font-size: 2vh; color: #888; font-weight: bold;">HỆ THỐNG ĐIỆN TỬ KÍCH HOẠT</div>
             </div>
         </div>
 
         <!-- ================= BÊN ĐỎ ================= -->
         <div class="team team-red">
-            <div class="athlete-name red-text" id="nameRed">VĐV ĐỎ</div>
-            <div class="athlete-unit" id="unitRed">ĐƠN VỊ</div>
-            <div class="score score-red" id="scoreRed">0</div>
-            
-            <!-- ĐÈN GIÁM ĐỊNH ĐỎ -->
-            <div class="viewer-lights">
-                <div class="vl-row">
-                    <span class="vl-label red-text">ĐIỂM TAY (+1)</span>
-                    <div class="vl-circles">
-                        <div class="v-light" id="vw_l_r1_1"></div><div class="v-light" id="vw_l_r1_2"></div><div class="v-light" id="vw_l_r1_3"></div><div class="v-light" id="vw_l_r1_4"></div><div class="v-light" id="vw_l_r1_5"></div>
-                    </div>
-                </div>
-                <div class="vl-row">
-                    <span class="vl-label red-text">ĐIỂM CHÂN (+2)</span>
-                    <div class="vl-circles">
-                        <div class="v-light" id="vw_l_r2_1"></div><div class="v-light" id="vw_l_r2_2"></div><div class="v-light" id="vw_l_r2_3"></div><div class="v-light" id="vw_l_r2_4"></div><div class="v-light" id="vw_l_r2_5"></div>
+            <!-- THÔNG TIN VĐV ĐỎ -->
+            <div class="team-inner">
+                <div class="athlete-name red-text" id="nameRed">VĐV ĐỎ</div>
+                <div class="athlete-unit" id="unitRed">ĐƠN VỊ</div>
+                <div class="score score-red" id="scoreRed">0</div>
+                
+                <div class="warnings-container">
+                    <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
+                    <div class="warnings">
+                        <div class="warn-circle" id="rw1"></div><div class="warn-circle" id="rw2"></div><div class="warn-circle" id="rw3"></div>
                     </div>
                 </div>
             </div>
-            
-            <div class="warnings-container">
-                <div class="warn-title">CẢNH CÁO / VI PHẠM</div>
-                <div class="warnings">
-                    <div class="warn-circle" id="rw1"></div>
-                    <div class="warn-circle" id="rw2"></div>
-                    <div class="warn-circle" id="rw3"></div>
+
+            <!-- ĐÈN GIÁM ĐỊNH NẰM SÁT MÉP PHẢI -->
+            <div class="outer-lights">
+                <div class="light-col">
+                    <div class="light-title" style="color: #ffcc00;">TAY</div>
+                    <div class="v-light" id="vw_l_r1_1">1</div><div class="v-light" id="vw_l_r1_2">2</div><div class="v-light" id="vw_l_r1_3">3</div><div class="v-light" id="vw_l_r1_4">4</div><div class="v-light" id="vw_l_r1_5">5</div>
+                </div>
+                <div class="light-col">
+                    <div class="light-title" style="color: #00ffcc;">CHÂN</div>
+                    <div class="v-light" id="vw_l_r2_1">1</div><div class="v-light" id="vw_l_r2_2">2</div><div class="v-light" id="vw_l_r2_3">3</div><div class="v-light" id="vw_l_r2_4">4</div><div class="v-light" id="vw_l_r2_5">5</div>
                 </div>
             </div>
         </div>
@@ -239,12 +244,14 @@
             }
         });
 
-        // --- ĐỒNG BỘ ĐÈN BÁO GIÁM ĐỊNH BẤM ---
+        // --- THUẬT TOÁN MÀU SẮC ĐÈN (VÀNG VÀ XANH LAM) ---
         socket.on('server_send_vote', function(d) {
             let sideCode = d.side === 'blue' ? 'b' : 'r';
             let lightId = `vw_l_${sideCode}${d.points}_${d.judge_id}`;
             let light = document.getElementById(lightId);
-            let colorClass = d.side === 'blue' ? 'on-blue' : 'on-red';
+            
+            // +1 (Tay) => Màu Vàng | +2 (Chân) => Màu Xanh Lam
+            let colorClass = d.points == 1 ? 'on-yellow' : 'on-cyan';
             
             if(light) { 
                 light.classList.add(colorClass); 
