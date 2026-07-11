@@ -2,13 +2,13 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN V5.8 - VAR ĐỒNG BỘ THÔNG MINH</title>
+    <title>ADMIN V5.9 - HỆ THỐNG VAR & LOG THỜI GIAN THỰC</title>
     <script src="/static/socket.io.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 10px; text-align: center; overflow-y: auto; padding-bottom: 80px; }
         .top-ctrl { display: flex; justify-content: space-between; background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; align-items: center; }
         
-        /* BỐ CỤC ĐIỂM SỐ ĐÃ KÉO DÃN KHỚP MÀN HÌNH */
+        /* BỐ CỤC ĐIỂM SỐ */
         .scoreboard { display: flex; justify-content: center; gap: 20px; width: 100%; max-width: 1200px; margin: 0 auto 15px auto; }
         .team { flex: 1; max-width: 400px; background: #1a1a1a; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 3px solid; }
         .team-blue { border-color: #3399ff; }
@@ -35,20 +35,31 @@
         select, button { padding: 8px 15px; font-size: 1em; cursor: pointer; font-weight: bold; border-radius: 5px; border: none; }
         .adj-btn { padding: 8px 12px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin: 3px; border-radius: 5px;}
         
-        /* GIAO DIỆN VAR MỚI (NÚT BẤM NẰM TRÊN ĐẦU) */
+        /* GIAO DIỆN VAR MỚI */
         .var-container { max-width: 1200px; margin: 0 auto; background: #1a1a1a; border: 2px dashed #ff9900; border-radius: 10px; padding: 15px; box-sizing: border-box; }
         .var-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 10px; }
         .var-content { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-        .var-box { flex: 1; min-width: 400px; max-width: 550px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .var-box { flex: 1; min-width: 400px; max-width: 550px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; transition: 0.3s; }
         video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 5px; border: 1px solid #555; object-fit: cover; }
+        
         .var-controls-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .btn-group { display: flex; gap: 5px; margin: 0; }
+        
+        /* HIỆU ỨNG TRẠNG THÁI VAR */
+        .var-badge { display: flex; align-items: center; gap: 5px; background: #444; padding: 3px 10px; border-radius: 5px; font-size: 0.95em; border: 1px solid #666; }
+        .badge-rec { background: #330000; border-color: #ff4d4d; color: #ff4d4d; }
+        .badge-pause { background: #332200; border-color: #ffcc00; color: #ffcc00; }
+        
+        @keyframes blink { 50% { opacity: 0.3; } }
+        .dot-blink { animation: blink 1s infinite; color: #ff4d4d; font-size: 1.2em;}
 
-        /* HỘP LOG THU GỌN */
-        #logBox { position: fixed; bottom: 70px; right: 20px; width: 300px; background: rgba(0,0,0,0.95); border: 2px solid #777; border-radius: 10px; padding: 10px; z-index: 997; text-align: left; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
-        #logContent { display: none; flex-direction: column; gap: 5px; font-size: 0.9em; height: 180px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
+        /* HỘP LOG CÓ THỂ TƯƠNG TÁC */
+        #logBox { position: fixed; bottom: 70px; right: 20px; width: 340px; background: rgba(0,0,0,0.95); border: 2px solid #777; border-radius: 10px; padding: 10px; z-index: 997; text-align: left; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
+        #logContent { display: none; flex-direction: column; gap: 5px; font-size: 0.9em; height: 220px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
         #logContent::-webkit-scrollbar { width: 4px; }
         #logContent::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
+        .log-time-link { color: #3399ff; text-decoration: underline; cursor: pointer; font-weight: bold; }
+        .log-time-link:hover { color: #00ffcc; }
     </style>
 </head>
 <body>
@@ -114,13 +125,21 @@
     </div>
     
     <div class="var-content">
-        <div class="var-box">
+        <div class="var-box" id="varLiveWrapper">
             <div class="var-controls-top">
-                <span style="color: #00ffcc; font-weight: bold;">🔴 TRỰC TIẾP TRÊN SÂN</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="color: #00ffcc; font-weight: bold;">🔴 CAM TRỰC TIẾP</span>
+                    
+                    <div id="varStatusBadge" class="var-badge" style="display: none;">
+                        <span id="varDot" class="dot-blink">●</span>
+                        <span id="varStatusText">ĐANG GHI</span> 
+                        [<span id="varClock">00:00</span>]
+                    </div>
+                </div>
+                
                 <div class="btn-group">
-                    <button id="btnVarRecord" onclick="toggleVarRecord()" style="background: #cc0000; color: white;">🔴 QUAY</button>
-                    <button id="btnVarPause" onclick="pauseVarRecord()" style="background: #ffcc00; color: black; display: none;">⏸️ DỪNG</button>
-                    <button id="btnVarStop" onclick="stopVarRecord()" style="background: #0066cc; color: white; display: none;">⏹️ CHỐT VIDEO</button>
+                    <button id="btnVarRecord" onclick="toggleVarRecord()" style="background: #333; color: #ccc;">Sẵn sàng</button>
+                    <button id="btnVarStop" onclick="stopVarRecord()" style="background: #0066cc; color: white; display: none;">⏹️ CHỐT VIDEO NÀY</button>
                 </div>
             </div>
             <video id="varLiveVideo" autoplay playsinline muted></video>
@@ -133,7 +152,7 @@
                     <button onclick="setVarSpeed(1.0)" style="background: #444; color: white; padding: 6px 10px;">1x</button>
                     <button onclick="setVarSpeed(0.5)" style="background: #444; color: white; padding: 6px 10px;">0.5x</button>
                     <button onclick="setVarSpeed(0.25)" style="background: #444; color: white; padding: 6px 10px;">0.25x</button>
-                    <button onclick="downloadVarVideo()" style="background: #28a745; color: white; margin-left: 5px;">💾 LƯU</button>
+                    <button onclick="downloadVarVideo()" style="background: #28a745; color: white; margin-left: 5px;">💾 TẢI XUỐNG</button>
                 </div>
             </div>
             <video id="varReplayVideo" controls style="border-color: #ff9900;"></video>
@@ -143,7 +162,7 @@
 
 <div id="logBox">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #555; padding-bottom: 5px;">
-        <div style="color: yellow; font-weight: bold; font-size: 0.9em;">📜 LOG THAO TÁC</div>
+        <div style="color: yellow; font-weight: bold; font-size: 0.9em;">📜 LOG TƯƠNG TÁC VAR</div>
         <button onclick="toggleLogBox()" id="btnToggleLog" style="background: #444; color: white; padding: 2px 8px; font-size: 0.8em;">▲ MỞ LÊN</button>
     </div>
     <div id="logContent"></div>
@@ -167,6 +186,10 @@
     var isLightMode = false;
     var timeRemaining = 120, timerInterval = null;
     var matchList = []; 
+
+    // Biến cho đồng hồ VAR
+    let varSeconds = 0;
+    let varTimerInt = null;
 
     function loadMatches() {
         let btn = document.querySelector("button[onclick='loadMatches()']");
@@ -209,25 +232,18 @@
         updateTimerDisplay(); syncInfo(); 
     }
     
-    // --- NÂNG CẤP TÍNH NĂNG ĐỒNG BỘ AUTO-SYNC VAR VỚI ĐỒNG HỒ ---
+    // ĐỒNG BỘ NÚT START/STOP VỚI VAR
     function toggleTimer() { 
         if(timerInterval) {
             stopTimer(); 
-            // Dừng đồng hồ => Tự động Tạm dừng VAR (nếu đang quay)
-            if(varMediaRecorder && varMediaRecorder.state === 'recording') {
-                pauseVarRecord();
-            }
+            if(varMediaRecorder && varMediaRecorder.state === 'recording') pauseVarRecord();
         } else {
             timerInterval=setInterval(()=>{timeRemaining--; updateTimerDisplay(); if(timeRemaining<=0) stopTimer();},1000);
             
-            // Bắt đầu đồng hồ => Tự động Quay / Tiếp tục VAR (nếu đã bật camera)
             let liveVideo = document.getElementById('varLiveVideo');
             if(liveVideo && liveVideo.srcObject) {
-                if(!varMediaRecorder || varMediaRecorder.state === 'inactive') {
-                    toggleVarRecord(); // Quay trận mới
-                } else if (varMediaRecorder.state === 'paused') {
-                    pauseVarRecord(); // Resume tiếp tục quay
-                }
+                if(!varMediaRecorder || varMediaRecorder.state === 'inactive') toggleVarRecord();
+                else if (varMediaRecorder.state === 'paused') pauseVarRecord(); // Function này sẽ đóng vai trò Resume
             }
         }
     }
@@ -241,18 +257,51 @@
         else { content.style.display = 'none'; btn.innerText = '▲ MỞ LÊN'; }
     }
 
-    function addLogEntry(msg, type) {
+    // --- HÀM TẠO LOG KÉP (TRẬN + VAR) ---
+    function addLogEntry(msg, type, vidTimeSec) {
         let logDiv = document.getElementById('logContent'); if(!logDiv) return;
         let color = (type === 'score') ? '#00ffcc' : '#aaaaaa'; let fontWeight = (type === 'score') ? 'bold' : 'normal';
         let border = (type === 'score') ? 'border-bottom: 1px dashed #555; padding-bottom: 5px; margin-bottom: 5px;' : '';
-        logDiv.innerHTML = `<div style="color: ${color}; font-weight: ${fontWeight}; ${border}">${msg}</div>` + logDiv.innerHTML;
+        
+        let matchTime = document.getElementById('timer').innerText;
+        
+        // Tạo liên kết Click-to-Jump nếu đang có thời gian VAR
+        let timePrefix = "";
+        if (vidTimeSec !== null && vidTimeSec >= 0) {
+            let vm = Math.floor(vidTimeSec/60).toString().padStart(2,'0');
+            let vs = (vidTimeSec%60).toString().padStart(2,'0');
+            timePrefix = `[<span class="log-time-link" onclick="jumpToVarTime(${vidTimeSec})" title="Bấm để tua Video VAR đến ${vm}:${vs}">Trận: ${matchTime} | VAR: ${vm}:${vs}</span>]`;
+        } else {
+            timePrefix = `[Trận: ${matchTime}]`;
+        }
+
+        logDiv.innerHTML = `<div style="color: ${color}; font-weight: ${fontWeight}; ${border}">${timePrefix} ${msg}</div>` + logDiv.innerHTML;
         if (logDiv.children.length > 100) logDiv.removeChild(logDiv.lastChild);
+    }
+
+    // HÀM TUA VIDEO VAR TỰ ĐỘNG
+    function jumpToVarTime(sec) {
+        let replayBox = document.getElementById('varReplayWrapper');
+        let replayVid = document.getElementById('varReplayVideo');
+        
+        if (replayBox.style.opacity === "1" && replayVid.src) {
+            replayVid.currentTime = sec;
+            replayVid.play();
+            // Highlight khung video để dễ nhìn
+            replayBox.style.border = "2px solid #00ffcc";
+            setTimeout(() => replayBox.style.border = "none", 1000);
+        } else {
+            alert("⚠️ Hãy ấn CHỐT VIDEO NÀY trước khi muốn xem lại băng hình tình huống!");
+        }
     }
 
     socket.on('server_send_vote', function(d) {
         let sideCode = d.side === 'blue' ? 'b' : 'r'; let lightId = `ad_l_${sideCode}${d.points}_${d.judge_id}`; let light = document.getElementById(lightId);
         if(light) { light.classList.add(d.side === 'blue' ? 'on-blue' : 'on-red'); setTimeout(() => light.classList.remove(d.side === 'blue' ? 'on-blue' : 'on-red'), 700); }
-        addLogEntry(`[${document.getElementById('timer').innerText}] GĐ ${d.judge_id} bấm ${d.points == 1 ? "Tay" : "Chân"} ${d.side === 'blue' ? "Xanh" : "Đỏ"}`, 'raw');
+        
+        let currentVarSec = (varMediaRecorder && varMediaRecorder.state === 'recording') ? varSeconds : null;
+        addLogEntry(`GĐ ${d.judge_id} bấm ${d.points == 1 ? "Tay" : "Chân"} ${d.side === 'blue' ? "Xanh" : "Đỏ"}`, 'raw', currentVarSec);
+        
         handleConsensus(d);
     });
 
@@ -265,20 +314,26 @@
         let valid = voteBuffer.filter(v => v.side === d.side && v.points === d.points); let judges = [...new Set(valid.map(v => v.judge_id))];
         if(judges.length >= 3) { 
             updateScore(d.side, d.points); 
-            addLogEntry(`⭐ [${document.getElementById('timer').innerText}] ${d.side === 'blue' ? "XANH" : "ĐỎ"} CỘNG ${d.points} ĐIỂM (GĐ: ${judges.join(', ')})`, 'score');
+            let currentVarSec = (varMediaRecorder && varMediaRecorder.state === 'recording') ? varSeconds : null;
+            addLogEntry(`⭐ ${d.side === 'blue' ? "XANH" : "ĐỎ"} CỘNG ${d.points} ĐIỂM (GĐ: ${judges.join(', ')})`, 'score', currentVarSec);
             voteBuffer = voteBuffer.filter(v => !(v.side === d.side && v.points === d.points)); 
         }
     }
     
     function updateScore(s,v) { scores[s]+=v; document.getElementById(s==='blue'?'scoreBlue':'scoreRed').innerText=scores[s]; socket.emit('admin_update',{type:'score', blue:scores.blue, red:scores.red}); }
-    function manualAdjust(s,v) { updateScore(s,v); addLogEntry(`⚙️ [${document.getElementById('timer').innerText}] Admin chỉnh tay: ${v > 0 ? '+'+v : v} điểm cho ${s === 'blue' ? "XANH" : "ĐỎ"}`, 'score'); }
+    function manualAdjust(s,v) { 
+        updateScore(s,v); 
+        let currentVarSec = (varMediaRecorder && varMediaRecorder.state === 'recording') ? varSeconds : null;
+        addLogEntry(`⚙️ Admin chỉnh tay: ${v > 0 ? '+'+v : v} điểm cho ${s === 'blue' ? "XANH" : "ĐỎ"}`, 'score', currentVarSec); 
+    }
 
     function addWarning(side) {
         warnings[side]++;
         if (warnings[side] >= 3) {
             updateScore(side, -2); warnings[side] = 0; 
             alert(`[HỆ THỐNG] VĐV ${side === 'blue' ? 'XANH' : 'ĐỎ'} đã vi phạm 3 lần. TỰ ĐỘNG TRỪ 2 ĐIỂM!`);
-            addLogEntry(`❌ [${document.getElementById('timer').innerText}] ${side === 'blue' ? "XANH" : "ĐỎ"} LỖI 3 LẦN (-2 ĐIỂM)`, 'score');
+            let currentVarSec = (varMediaRecorder && varMediaRecorder.state === 'recording') ? varSeconds : null;
+            addLogEntry(`❌ ${side === 'blue' ? "XANH" : "ĐỎ"} LỖI 3 LẦN (-2 ĐIỂM)`, 'score', currentVarSec);
         }
         document.getElementById('warnBtn_' + side).innerText = `⚠ Lỗi (${warnings[side]})`;
         socket.emit('admin_update', {type: 'warning', blueWarn: warnings.blue, redWarn: warnings.red});
@@ -332,18 +387,29 @@
             if (currentStream) currentStream.getTracks().forEach(t => t.stop());
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             document.getElementById('varLiveVideo').srcObject = currentStream;
+            
+            document.getElementById('btnVarRecord').innerText = "CHỜ BẮT ĐẦU TRẬN...";
+            document.getElementById('btnVarRecord').style.color = "white";
             fetchCameras();
         } catch (err) {
             alert("Lỗi truy cập Camera. Hãy chắc chắn bạn đã cho phép trên trình duyệt!");
         }
     }
 
+    // Hàm đếm giây cho VAR
+    function startVarClock() {
+        if(varTimerInt) clearInterval(varTimerInt);
+        varTimerInt = setInterval(() => {
+            varSeconds++;
+            let m = Math.floor(varSeconds/60).toString().padStart(2,'0');
+            let s = (varSeconds%60).toString().padStart(2,'0');
+            document.getElementById('varClock').innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
     function toggleVarRecord() {
         let liveVideo = document.getElementById('varLiveVideo');
-        if(!liveVideo.srcObject) {
-            alert("Vui lòng bấm 'KẾT NỐI CAM' trước khi ghi hình!");
-            return;
-        }
+        if(!liveVideo.srcObject) return; // Nếu chưa kết nối cam thì bỏ qua, không báo lỗi làm phiền Thư ký
 
         if(!varMediaRecorder || varMediaRecorder.state === 'inactive') {
             varRecordedChunks = [];
@@ -357,13 +423,26 @@
                 let replayWrapper = document.getElementById('varReplayWrapper');
                 replayWrapper.style.opacity = "1";
                 replayWrapper.style.pointerEvents = "auto";
+                
+                // Reset đồng hồ
+                clearInterval(varTimerInt);
+                varSeconds = 0;
+                document.getElementById('varClock').innerText = "00:00";
             };
             
             varMediaRecorder.start();
-            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI";
-            document.getElementById('btnVarRecord').style.background = "#8b0000";
-            document.getElementById('btnVarPause').style.display = 'inline-block';
-            document.getElementById('btnVarStop').style.display = 'inline-block';
+            startVarClock();
+            
+            // Cập nhật giao diện Huy hiệu
+            let badge = document.getElementById('varStatusBadge');
+            badge.style.display = "flex";
+            badge.className = "var-badge badge-rec";
+            document.getElementById('varDot').className = "dot-blink";
+            document.getElementById('varStatusText').innerText = "ĐANG GHI HÌNH";
+            
+            // Cập nhật Nút
+            document.getElementById('btnVarRecord').style.display = "none";
+            document.getElementById('btnVarStop').style.display = "inline-block";
             
             document.getElementById('varReplayWrapper').style.opacity = "0.3";
             document.getElementById('varReplayWrapper').style.pointerEvents = "none";
@@ -371,26 +450,35 @@
     }
 
     function pauseVarRecord() {
+        // Hàm này xử lý cả Pause và Resume
         if(varMediaRecorder && varMediaRecorder.state === 'recording') {
             varMediaRecorder.pause();
-            document.getElementById('btnVarPause').innerText = "▶️ TIẾP TỤC";
-            document.getElementById('btnVarPause').style.background = "#28a745"; 
-            document.getElementById('btnVarRecord').innerText = "⏸️ TẠM DỪNG";
+            clearInterval(varTimerInt);
+            
+            let badge = document.getElementById('varStatusBadge');
+            badge.className = "var-badge badge-pause";
+            document.getElementById('varDot').className = "";
+            document.getElementById('varStatusText').innerText = "ĐÃ TẠM DỪNG";
+            
         } else if (varMediaRecorder && varMediaRecorder.state === 'paused') {
             varMediaRecorder.resume();
-            document.getElementById('btnVarPause').innerText = "⏸️ TẠM DỪNG";
-            document.getElementById('btnVarPause').style.background = "#ffcc00"; 
-            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI";
+            startVarClock();
+            
+            let badge = document.getElementById('varStatusBadge');
+            badge.className = "var-badge badge-rec";
+            document.getElementById('varDot').className = "dot-blink";
+            document.getElementById('varStatusText').innerText = "ĐANG GHI HÌNH";
         }
     }
 
     function stopVarRecord() {
         if(varMediaRecorder && (varMediaRecorder.state === 'recording' || varMediaRecorder.state === 'paused')) {
             varMediaRecorder.stop();
-            document.getElementById('btnVarRecord').innerText = "🔴 QUAY LẠI TỪ ĐẦU";
-            document.getElementById('btnVarRecord').style.background = "#cc0000";
-            document.getElementById('btnVarPause').style.display = 'none';
-            document.getElementById('btnVarStop').style.display = 'none';
+            
+            document.getElementById('varStatusBadge').style.display = "none";
+            document.getElementById('btnVarRecord').style.display = "inline-block";
+            document.getElementById('btnVarRecord').innerText = "ĐÃ CHỐT! (Đợi trận mới)";
+            document.getElementById('btnVarStop').style.display = "none";
         }
     }
 
