@@ -2,20 +2,23 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN V5.7 - HỆ THỐNG VAR TRỰC TIẾP</title>
+    <title>ADMIN V5.8 - VAR ĐỒNG BỘ THÔNG MINH</title>
     <script src="/static/socket.io.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 10px; text-align: center; overflow-y: auto; padding-bottom: 80px; }
-        .top-ctrl { display: flex; justify-content: space-between; background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .top-ctrl { display: flex; justify-content: space-between; background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; align-items: center; }
         
-        /* BỐ CỤC ĐIỂM SỐ ĐÃ THU GỌN CHIỀU RỘNG */
-        .scoreboard { display: flex; justify-content: center; gap: 20px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; }
-        .team { flex: 1; max-width: 280px; background: #1a1a1a; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .score-display { font-size: 5em; font-weight: bold; background: #000; width: 100%; border-radius: 10px; margin: 10px auto; line-height: 1.2; }
+        /* BỐ CỤC ĐIỂM SỐ ĐÃ KÉO DÃN KHỚP MÀN HÌNH */
+        .scoreboard { display: flex; justify-content: center; gap: 20px; width: 100%; max-width: 1200px; margin: 0 auto 15px auto; }
+        .team { flex: 1; max-width: 400px; background: #1a1a1a; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 3px solid; }
+        .team-blue { border-color: #3399ff; }
+        .team-red { border-color: #ff4d4d; }
+        
+        .score-display { font-size: 5.5em; font-weight: bold; background: #000; width: 100%; border-radius: 10px; margin: 10px auto; line-height: 1.1; }
         .blue-text { color: #3399ff; } .red-text { color: #ff4d4d; }
         
         .center-panel { width: 320px; display: flex; flex-direction: column; flex-shrink: 0; }
-        .timer { font-size: 3.5em; color: yellow !important; background: #000 !important; border: 2px solid #555; border-radius: 10px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        .timer { font-size: 3.5em; color: yellow !important; background: #000 !important; border: 2px solid #555; border-radius: 10px; margin-bottom: 5px; width: 100%; box-sizing: border-box; line-height: 1.1; }
         
         .lights-box { background: #000; padding: 10px; border-radius: 5px; text-align: center; margin-top: 5px; width: 100%; box-sizing: border-box; }
         .lights-section { display: flex; justify-content: space-between; margin-bottom: 3px; border-bottom: 1px dashed #333; padding-bottom: 3px;}
@@ -23,25 +26,27 @@
         .light { width: 18px; height: 18px; border-radius: 50%; background: #333; border: 1px solid #555; }
         .on-blue { background: #0055ff; box-shadow: 0 0 10px #0055ff; border: 1px solid white; }
         .on-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; border: 1px solid white; }
-        .btn-theme { background: #fff; color: #000; border: none; font-weight: bold; cursor: pointer; padding: 10px; border-radius: 5px;}
+        
+        .btn-theme { background: #fff; color: #000; border: none; font-weight: bold; cursor: pointer; padding: 8px 15px; border-radius: 5px;}
         .btn-end { background: #6a0dad; color: white; font-weight: bold; font-size: 1.1em; padding: 10px; width: 100%; border: 2px solid white; cursor: pointer; margin-top: 5px; border-radius: 5px;}
         .bottom-config { background: #111; padding: 10px; position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 20px; border-top: 1px solid #444; align-items: center; z-index: 998;}
         .time-group { display: flex; flex-direction: column; text-align: left; font-size: 0.8em; color: #aaa; }
         input { padding: 5px; width: 60px; text-align: center; font-weight: bold; font-size: 1.1em; }
-        select, button { padding: 8px 15px; font-size: 1em; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        select, button { padding: 8px 15px; font-size: 1em; cursor: pointer; font-weight: bold; border-radius: 5px; border: none; }
         .adj-btn { padding: 8px 12px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin: 3px; border-radius: 5px;}
         
-        /* GIAO DIỆN VAR TRẢI DÀI PHÍA DƯỚI */
+        /* GIAO DIỆN VAR MỚI (NÚT BẤM NẰM TRÊN ĐẦU) */
         .var-container { max-width: 1200px; margin: 0 auto; background: #1a1a1a; border: 2px dashed #ff9900; border-radius: 10px; padding: 15px; box-sizing: border-box; }
-        .var-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; }
+        .var-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 10px; }
         .var-content { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-        .var-box { flex: 1; min-width: 400px; max-width: 550px; }
-        video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; border: 2px solid #555; object-fit: cover; }
-        .var-controls { margin-top: 10px; display: flex; gap: 10px; justify-content: center; }
+        .var-box { flex: 1; min-width: 400px; max-width: 550px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 5px; border: 1px solid #555; object-fit: cover; }
+        .var-controls-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .btn-group { display: flex; gap: 5px; margin: 0; }
 
         /* HỘP LOG THU GỌN */
-        #logBox { position: fixed; bottom: 80px; right: 20px; width: 300px; background: rgba(0,0,0,0.95); border: 2px solid #777; border-radius: 10px; padding: 10px; z-index: 997; text-align: left; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
-        #logContent { display: none; flex-direction: column; gap: 5px; font-size: 0.9em; height: 200px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
+        #logBox { position: fixed; bottom: 70px; right: 20px; width: 300px; background: rgba(0,0,0,0.95); border: 2px solid #777; border-radius: 10px; padding: 10px; z-index: 997; text-align: left; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
+        #logContent { display: none; flex-direction: column; gap: 5px; font-size: 0.9em; height: 180px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
         #logContent::-webkit-scrollbar { width: 4px; }
         #logContent::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
     </style>
@@ -49,20 +54,20 @@
 <body>
 
 <div class="top-ctrl">
-    <div>
-        <button onclick="loadMatches()">🔄 Tải DS</button>
-        <select id="matchSelect" onchange="setupMatch()"><option>-- Chọn Trận --</option></select>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button onclick="loadMatches()" style="background: #fff; color: #000;">🔄 Tải DS</button>
+        <select id="matchSelect" onchange="setupMatch()" style="background: #444; color: white;"><option>-- Chọn Trận --</option></select>
     </div>
-    <div>
+    <div style="display: flex; gap: 10px; align-items: center;">
         <button class="btn-theme" onclick="toggleTheme()">☀/🌙 Giao diện</button>
-        <a href="/viewer" target="_blank" style="color:yellow; margin-left: 10px; font-weight: bold; text-decoration: none;">📺 MỞ TIVI</a>
+        <a href="/viewer" target="_blank" style="color:yellow; font-weight: bold; text-decoration: none; border: 1px solid yellow; padding: 6px 10px; border-radius: 5px;">📺 TIVI KẾT QUẢ</a>
     </div>
 </div>
 
 <div class="scoreboard">
-    <div class="team" style="border: 2px solid #3399ff">
-        <h2 class="blue-text" id="nameBlue" style="margin:0;">XANH</h2>
-        <div id="unitBlue" style="margin-bottom: 10px;">---</div>
+    <div class="team team-blue">
+        <h2 class="blue-text" id="nameBlue" style="margin:0; font-size: 2em;">XANH</h2>
+        <div id="unitBlue" style="margin-bottom: 10px; color: #aaa;">---</div>
         <div class="score-display blue-text" id="scoreBlue">0</div>
         <div>
             <button class="adj-btn" onclick="manualAdjust('blue', 1)">+1 (Q)</button>
@@ -73,9 +78,9 @@
     </div>
 
     <div class="center-panel">
-        <h3 id="roundDisplay" style="color:#0f0; margin:0">HIỆP 1</h3>
+        <h3 id="roundDisplay" style="color:#0f0; margin:0 0 5px 0; font-size: 1.5em;">HIỆP 1</h3>
         <div id="timer" class="timer">02:00</div>
-        <button onclick="toggleTimer()" style="padding:15px; background: #28a745; color:white; font-weight:bold; width: 100%; border-radius: 5px; border:none; cursor: pointer; font-size: 1.1em;">▶ BẮT ĐẦU / DỪNG (Space)</button>
+        <button onclick="toggleTimer()" style="padding:15px; background: #28a745; color:white; font-weight:bold; width: 100%; border-radius: 5px; border:none; cursor: pointer; font-size: 1.2em; text-transform: uppercase;">▶ BẮT ĐẦU / DỪNG (Space)</button>
         
         <div class="lights-box">
             <div class="lights-section"><span style="color:#3399ff; font-size:0.8em">Xanh +1</span><div class="light-row" id="row_b1"><div class="light" id="ad_l_b1_1"></div><div class="light" id="ad_l_b1_2"></div><div class="light" id="ad_l_b1_3"></div><div class="light" id="ad_l_b1_4"></div><div class="light" id="ad_l_b1_5"></div></div></div>
@@ -86,9 +91,9 @@
         <button class="btn-end" onclick="finishMatch()">🏁 KẾT THÚC TRẬN</button>
     </div>
 
-    <div class="team" style="border: 2px solid #ff4d4d">
-        <h2 class="red-text" id="nameRed" style="margin:0;">ĐỎ</h2>
-        <div id="unitRed" style="margin-bottom: 10px;">---</div>
+    <div class="team team-red">
+        <h2 class="red-text" id="nameRed" style="margin:0; font-size: 2em;">ĐỎ</h2>
+        <div id="unitRed" style="margin-bottom: 10px; color: #aaa;">---</div>
         <div class="score-display red-text" id="scoreRed">0</div>
         <div>
             <button class="adj-btn" onclick="manualAdjust('red', 1)">+1 (O)</button>
@@ -101,43 +106,45 @@
 
 <div class="var-container">
     <div class="var-header">
-        <h2 style="color: #ff9900; margin: 0;">🎥 TRẠM QUẢN LÝ VAR</h2>
-        <div>
-            <select id="cameraSelect" style="background: #333; color: white; border: 1px solid #555; margin-right: 10px;">
-                <option value="">-- Camera Mặc định --</option>
-            </select>
-            <button onclick="startVarCamera()" style="background: #28a745; color: white;">BẬT CAMERA</button>
+        <h3 style="color: #ff9900; margin: 0;">🎥 TRẠM QUẢN LÝ VAR</h3>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <select id="cameraSelect" style="background: #333; color: white; border: 1px solid #555;"><option value="">-- Chọn Camera --</option></select>
+            <button onclick="startVarCamera()" style="background: #28a745; color: white;">KẾT NỐI CAM</button>
         </div>
     </div>
     
     <div class="var-content">
         <div class="var-box">
-            <div style="color: #00ffcc; font-weight: bold; margin-bottom: 5px;">🔴 TRỰC TIẾP TRÊN SÂN</div>
-            <video id="varLiveVideo" autoplay playsinline muted></video>
-            <div class="var-controls">
-                <button id="btnVarRecord" onclick="toggleVarRecord()" style="background: #cc0000; color: white; width: 120px;">🔴 GHI HÌNH</button>
-                <button id="btnVarPause" onclick="pauseVarRecord()" style="background: #ffcc00; color: black; display: none; width: 120px;">⏸️ TẠM DỪNG</button>
-                <button id="btnVarStop" onclick="stopVarRecord()" style="background: #0066cc; color: white; display: none; width: 120px;">⏹️ CHỐT VIDEO</button>
+            <div class="var-controls-top">
+                <span style="color: #00ffcc; font-weight: bold;">🔴 TRỰC TIẾP TRÊN SÂN</span>
+                <div class="btn-group">
+                    <button id="btnVarRecord" onclick="toggleVarRecord()" style="background: #cc0000; color: white;">🔴 QUAY</button>
+                    <button id="btnVarPause" onclick="pauseVarRecord()" style="background: #ffcc00; color: black; display: none;">⏸️ DỪNG</button>
+                    <button id="btnVarStop" onclick="stopVarRecord()" style="background: #0066cc; color: white; display: none;">⏹️ CHỐT VIDEO</button>
+                </div>
             </div>
+            <video id="varLiveVideo" autoplay playsinline muted></video>
         </div>
         
         <div class="var-box" id="varReplayWrapper" style="opacity: 0.3; pointer-events: none;">
-            <div style="color: #ff9900; font-weight: bold; margin-bottom: 5px;">⏪ BĂNG HÌNH CHECK VAR</div>
-            <video id="varReplayVideo" controls style="border-color: #ff9900;"></video>
-            <div class="var-controls">
-                <button onclick="setVarSpeed(1.0)" style="background: #444; color: white;">1x</button>
-                <button onclick="setVarSpeed(0.5)" style="background: #444; color: white;">0.5x</button>
-                <button onclick="setVarSpeed(0.25)" style="background: #444; color: white;">0.25x</button>
-                <button onclick="downloadVarVideo()" style="background: #28a745; color: white; margin-left: auto;">💾 LƯU VIDEO</button>
+            <div class="var-controls-top">
+                <span style="color: #ff9900; font-weight: bold;">⏪ BĂNG HÌNH CHECK VAR</span>
+                <div class="btn-group">
+                    <button onclick="setVarSpeed(1.0)" style="background: #444; color: white; padding: 6px 10px;">1x</button>
+                    <button onclick="setVarSpeed(0.5)" style="background: #444; color: white; padding: 6px 10px;">0.5x</button>
+                    <button onclick="setVarSpeed(0.25)" style="background: #444; color: white; padding: 6px 10px;">0.25x</button>
+                    <button onclick="downloadVarVideo()" style="background: #28a745; color: white; margin-left: 5px;">💾 LƯU</button>
+                </div>
             </div>
+            <video id="varReplayVideo" controls style="border-color: #ff9900;"></video>
         </div>
     </div>
 </div>
 
 <div id="logBox">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #555; padding-bottom: 5px;">
-        <div style="color: yellow; font-weight: bold;">📜 LOG THAO TÁC</div>
-        <button onclick="toggleLogBox()" id="btnToggleLog" style="background: #444; border: 1px solid #777; color: white; border-radius: 3px; padding: 2px 10px;">▲ MỞ</button>
+        <div style="color: yellow; font-weight: bold; font-size: 0.9em;">📜 LOG THAO TÁC</div>
+        <button onclick="toggleLogBox()" id="btnToggleLog" style="background: #444; color: white; padding: 2px 8px; font-size: 0.8em;">▲ MỞ LÊN</button>
     </div>
     <div id="logContent"></div>
 </div>
@@ -145,15 +152,14 @@
 <div class="bottom-config">
     <div class="time-group"><label>Giờ Đấu (s)</label><input type="number" id="timeMatch" value="120"></div>
     <div class="time-group"><label>Giờ Nghỉ (s)</label><input type="number" id="timeBreak" value="60"></div>
-    <select id="roundSelect" onchange="setRound()">
+    <select id="roundSelect" onchange="setRound()" style="background: #fff; color: #000;">
         <option value="HIỆP 1">HIỆP 1</option><option value="NGHỈ">NGHỈ</option><option value="HIỆP 2">HIỆP 2</option><option value="HIỆP PHỤ">HIỆP PHỤ</option>
     </select>
-    <button onclick="resetAll()">RESET</button>
-    <button onclick="saveToSheet()" style="background: #004080; color: white;">💾 LƯU BẢNG ĐIỂM</button>
+    <button onclick="resetAll()" style="background: #555; color: white;">RESET KẾT QUẢ</button>
+    <button onclick="saveToSheet()" style="background: #0066cc; color: white; padding: 8px 20px;">💾 LƯU LÊN SHEET</button>
 </div>
 
 <script>
-    // TẤT CẢ LOGIC ĐIỂM SỐ GIỮ NGUYÊN
     var socket = io();
     var scores = { blue: 0, red: 0 };
     var warnings = { blue: 0, red: 0 }; 
@@ -203,14 +209,36 @@
         updateTimerDisplay(); syncInfo(); 
     }
     
-    function toggleTimer() { if(timerInterval) stopTimer(); else timerInterval=setInterval(()=>{timeRemaining--; updateTimerDisplay(); if(timeRemaining<=0) stopTimer();},1000); }
+    // --- NÂNG CẤP TÍNH NĂNG ĐỒNG BỘ AUTO-SYNC VAR VỚI ĐỒNG HỒ ---
+    function toggleTimer() { 
+        if(timerInterval) {
+            stopTimer(); 
+            // Dừng đồng hồ => Tự động Tạm dừng VAR (nếu đang quay)
+            if(varMediaRecorder && varMediaRecorder.state === 'recording') {
+                pauseVarRecord();
+            }
+        } else {
+            timerInterval=setInterval(()=>{timeRemaining--; updateTimerDisplay(); if(timeRemaining<=0) stopTimer();},1000);
+            
+            // Bắt đầu đồng hồ => Tự động Quay / Tiếp tục VAR (nếu đã bật camera)
+            let liveVideo = document.getElementById('varLiveVideo');
+            if(liveVideo && liveVideo.srcObject) {
+                if(!varMediaRecorder || varMediaRecorder.state === 'inactive') {
+                    toggleVarRecord(); // Quay trận mới
+                } else if (varMediaRecorder.state === 'paused') {
+                    pauseVarRecord(); // Resume tiếp tục quay
+                }
+            }
+        }
+    }
+
     function stopTimer() { clearInterval(timerInterval); timerInterval=null; }
     function updateTimerDisplay() { let m=Math.floor(timeRemaining/60).toString().padStart(2,'0'); let s=(timeRemaining%60).toString().padStart(2,'0'); document.getElementById('timer').innerText=`${m}:${s}`; socket.emit('admin_update',{type:'timer', timeStr:`${m}:${s}`}); }
     
     function toggleLogBox() {
         let content = document.getElementById('logContent'); let btn = document.getElementById('btnToggleLog');
         if (content.style.display === 'none' || content.style.display === '') { content.style.display = 'flex'; btn.innerText = '▼ ĐÓNG'; } 
-        else { content.style.display = 'none'; btn.innerText = '▲ MỞ'; }
+        else { content.style.display = 'none'; btn.innerText = '▲ MỞ LÊN'; }
     }
 
     function addLogEntry(msg, type) {
@@ -280,14 +308,13 @@
     let varRecordedChunks = [];
     let varVideoBlob;
 
-    // Quét danh sách Camera kết nối vào máy
     async function fetchCameras() {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevs = devices.filter(d => d.kind === 'videoinput');
             const sel = document.getElementById('cameraSelect');
             let currentVal = sel.value;
-            sel.innerHTML = '<option value="">-- Camera Mặc định --</option>';
+            sel.innerHTML = '<option value="">-- Chọn Camera --</option>';
             videoDevs.forEach((d, i) => {
                 sel.innerHTML += `<option value="${d.deviceId}">${d.label || 'Camera ' + (i+1)}</option>`;
             });
@@ -299,14 +326,12 @@
         let camId = document.getElementById('cameraSelect').value;
         let constraints = { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
         if (camId) constraints.video.deviceId = { exact: camId };
-        else constraints.video.facingMode = "environment"; // Dùng cam sau nếu chạy trên điện thoại/ipad
+        else constraints.video.facingMode = "environment"; 
 
         try {
             if (currentStream) currentStream.getTracks().forEach(t => t.stop());
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             document.getElementById('varLiveVideo').srcObject = currentStream;
-            
-            // Quét lại tên Camera sau khi đã được cấp quyền (sẽ hiện tên đầy đủ như DroidCam, OBS Camera...)
             fetchCameras();
         } catch (err) {
             alert("Lỗi truy cập Camera. Hãy chắc chắn bạn đã cho phép trên trình duyệt!");
@@ -315,7 +340,10 @@
 
     function toggleVarRecord() {
         let liveVideo = document.getElementById('varLiveVideo');
-        if(!liveVideo.srcObject) return alert("Vui lòng bấm 'BẬT CAMERA' trước khi quay!");
+        if(!liveVideo.srcObject) {
+            alert("Vui lòng bấm 'KẾT NỐI CAM' trước khi ghi hình!");
+            return;
+        }
 
         if(!varMediaRecorder || varMediaRecorder.state === 'inactive') {
             varRecordedChunks = [];
@@ -326,19 +354,17 @@
                 varVideoBlob = new Blob(varRecordedChunks, { type: 'video/webm' });
                 document.getElementById('varReplayVideo').src = URL.createObjectURL(varVideoBlob);
                 
-                // Mở khóa màn hình Replay
                 let replayWrapper = document.getElementById('varReplayWrapper');
                 replayWrapper.style.opacity = "1";
                 replayWrapper.style.pointerEvents = "auto";
             };
             
             varMediaRecorder.start();
-            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI HÌNH";
+            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI";
             document.getElementById('btnVarRecord').style.background = "#8b0000";
             document.getElementById('btnVarPause').style.display = 'inline-block';
             document.getElementById('btnVarStop').style.display = 'inline-block';
             
-            // Xám màn hình Replay đi để báo hiệu đang quay trận mới
             document.getElementById('varReplayWrapper').style.opacity = "0.3";
             document.getElementById('varReplayWrapper').style.pointerEvents = "none";
         }
@@ -354,7 +380,7 @@
             varMediaRecorder.resume();
             document.getElementById('btnVarPause').innerText = "⏸️ TẠM DỪNG";
             document.getElementById('btnVarPause').style.background = "#ffcc00"; 
-            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI HÌNH";
+            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI";
         }
     }
 
