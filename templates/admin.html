@@ -2,40 +2,48 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN V5.6 - HỆ THỐNG VAR TỐI ƯU</title>
+    <title>ADMIN V5.7 - HỆ THỐNG VAR TRỰC TIẾP</title>
     <script src="/static/socket.io.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 10px; text-align: center; overflow-y: auto; }
+        body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 10px; text-align: center; overflow-y: auto; padding-bottom: 80px; }
         .top-ctrl { display: flex; justify-content: space-between; background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .scoreboard { display: flex; justify-content: space-between; height: 60vh; width: 100%; gap: 10px; }
-        .team { flex: 1; background: #1a1a1a; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .score-display { font-size: 6em; font-weight: bold; background: #000; width: 80%; border-radius: 10px; margin: 10px auto; line-height: 1.2; }
+        
+        /* BỐ CỤC ĐIỂM SỐ ĐÃ THU GỌN CHIỀU RỘNG */
+        .scoreboard { display: flex; justify-content: center; gap: 20px; width: 100%; max-width: 1200px; margin: 0 auto 20px auto; }
+        .team { flex: 1; max-width: 280px; background: #1a1a1a; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .score-display { font-size: 5em; font-weight: bold; background: #000; width: 100%; border-radius: 10px; margin: 10px auto; line-height: 1.2; }
         .blue-text { color: #3399ff; } .red-text { color: #ff4d4d; }
-        .center-panel { width: 340px; display: flex; flex-direction: column; flex-shrink: 0; }
-        .timer { font-size: 4em; color: yellow !important; background: #000 !important; border: 2px solid #555; border-radius: 10px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        
+        .center-panel { width: 320px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .timer { font-size: 3.5em; color: yellow !important; background: #000 !important; border: 2px solid #555; border-radius: 10px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        
         .lights-box { background: #000; padding: 10px; border-radius: 5px; text-align: center; margin-top: 5px; width: 100%; box-sizing: border-box; }
         .lights-section { display: flex; justify-content: space-between; margin-bottom: 3px; border-bottom: 1px dashed #333; padding-bottom: 3px;}
         .light-row { display: flex; gap: 3px; }
-        .light { width: 20px; height: 20px; border-radius: 50%; background: #333; border: 1px solid #555; }
+        .light { width: 18px; height: 18px; border-radius: 50%; background: #333; border: 1px solid #555; }
         .on-blue { background: #0055ff; box-shadow: 0 0 10px #0055ff; border: 1px solid white; }
         .on-red { background: #ff0000; box-shadow: 0 0 10px #ff0000; border: 1px solid white; }
-        .btn-theme { background: #fff; color: #000; border: none; font-weight: bold; cursor: pointer; }
-        .btn-end { background: #6a0dad; color: white; font-weight: bold; font-size: 1.2em; padding: 10px; width: 100%; border: 2px solid white; cursor: pointer; margin-top: 5px;}
-        .bottom-config { background: #111; padding: 15px; position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 20px; border-top: 1px solid #444; align-items: center; z-index: 998;}
+        .btn-theme { background: #fff; color: #000; border: none; font-weight: bold; cursor: pointer; padding: 10px; border-radius: 5px;}
+        .btn-end { background: #6a0dad; color: white; font-weight: bold; font-size: 1.1em; padding: 10px; width: 100%; border: 2px solid white; cursor: pointer; margin-top: 5px; border-radius: 5px;}
+        .bottom-config { background: #111; padding: 10px; position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 20px; border-top: 1px solid #444; align-items: center; z-index: 998;}
         .time-group { display: flex; flex-direction: column; text-align: left; font-size: 0.8em; color: #aaa; }
         input { padding: 5px; width: 60px; text-align: center; font-weight: bold; font-size: 1.1em; }
-        select, button { padding: 10px; font-size: 1em; cursor: pointer; }
-        .adj-btn { padding: 10px 15px; font-size: 1.2em; font-weight: bold; cursor: pointer; margin: 5px; }
+        select, button { padding: 8px 15px; font-size: 1em; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .adj-btn { padding: 8px 12px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin: 3px; border-radius: 5px;}
         
-        /* Tùy chỉnh thanh cuộn cho hộp Logs */
-        #logContent::-webkit-scrollbar { width: 6px; }
-        #logContent::-webkit-scrollbar-track { background: #111; }
-        #logContent::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
+        /* GIAO DIỆN VAR TRẢI DÀI PHÍA DƯỚI */
+        .var-container { max-width: 1200px; margin: 0 auto; background: #1a1a1a; border: 2px dashed #ff9900; border-radius: 10px; padding: 15px; box-sizing: border-box; }
+        .var-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; }
+        .var-content { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .var-box { flex: 1; min-width: 400px; max-width: 550px; }
+        video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; border: 2px solid #555; object-fit: cover; }
+        .var-controls { margin-top: 10px; display: flex; gap: 10px; justify-content: center; }
 
-        /* GIAO DIỆN CỬA SỔ NỔI VAR */
-        .var-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        .var-modal-content { width: 100%; max-width: 1100px; background: #222; border: 2px solid #ff9900; border-radius: 10px; padding: 20px; position: relative; max-height: 95vh; overflow-y: auto; }
-        .close-var-btn { position: absolute; top: 15px; right: 15px; background: #cc0000; color: white; border: none; font-size: 1.1em; cursor: pointer; border-radius: 5px; padding: 8px 15px; font-weight: bold; }
+        /* HỘP LOG THU GỌN */
+        #logBox { position: fixed; bottom: 80px; right: 20px; width: 300px; background: rgba(0,0,0,0.95); border: 2px solid #777; border-radius: 10px; padding: 10px; z-index: 997; text-align: left; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
+        #logContent { display: none; flex-direction: column; gap: 5px; font-size: 0.9em; height: 200px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
+        #logContent::-webkit-scrollbar { width: 4px; }
+        #logContent::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -47,47 +55,14 @@
     </div>
     <div>
         <button class="btn-theme" onclick="toggleTheme()">☀/🌙 Giao diện</button>
-        <a href="/viewer" target="_blank" style="color:yellow; margin-left: 10px;">Mở Tivi</a>
-    </div>
-    <button onclick="toggleVarPanel()" style="background: #ff9900; color: black; border-radius: 5px; font-weight: bold;">🎥 MỞ TRẠM VAR</button>
-</div>
-
-<div id="varPanel" class="var-modal">
-    <div class="var-modal-content">
-        <button onclick="toggleVarPanel()" class="close-var-btn">❌ ĐÓNG VAR</button>
-        <h2 style="color: #ff9900; margin-top: 0; margin-bottom: 20px; text-transform: uppercase;">Trạm Phân Tích VAR</h2>
-        
-        <div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 320px;">
-                <div style="color: #00ffcc; font-weight: bold; margin-bottom: 5px; font-size: 1.2em;">🔴 CAM TRỰC TIẾP (HD)</div>
-                <video id="varLiveVideo" autoplay playsinline muted style="width: 100%; border-radius: 8px; background: #000; border: 2px solid #555; aspect-ratio: 16/9;"></video>
-                
-                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                    <button id="btnVarRecord" onclick="toggleVarRecord()" style="background: #cc0000; color: white; padding: 12px 20px; font-weight: bold; border-radius: 5px; font-size: 1.1em;">🔴 BẮT ĐẦU</button>
-                    <button id="btnVarPause" onclick="pauseVarRecord()" style="background: #ffcc00; color: black; padding: 12px 20px; font-weight: bold; border-radius: 5px; font-size: 1.1em; display: none;">⏸️ TẠM DỪNG</button>
-                    <button id="btnVarStop" onclick="stopVarRecord()" style="background: #0066cc; color: white; padding: 12px 20px; font-weight: bold; border-radius: 5px; font-size: 1.1em; display: none;">⏹️ CHỐT VIDEO</button>
-                </div>
-            </div>
-            
-            <div id="varReplayBox" style="flex: 1; min-width: 320px; display: none;">
-                <div style="color: #ff9900; font-weight: bold; margin-bottom: 5px; font-size: 1.2em;">⏪ BĂNG HÌNH PHÂN TÍCH</div>
-                <video id="varReplayVideo" controls style="width: 100%; border-radius: 8px; background: #000; border: 2px solid #ff9900; aspect-ratio: 16/9;"></video>
-                
-                <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                    <button onclick="setVarSpeed(1.0)" style="background: #444; color: white; border-radius: 5px; font-weight: bold;">1x</button>
-                    <button onclick="setVarSpeed(0.5)" style="background: #444; color: white; border-radius: 5px; font-weight: bold;">0.5x</button>
-                    <button onclick="setVarSpeed(0.25)" style="background: #444; color: white; border-radius: 5px; font-weight: bold;">0.25x</button>
-                    <button onclick="downloadVarVideo()" style="background: #28a745; color: white; font-weight: bold; border-radius: 5px; margin-left: 15px;">💾 LƯU TÌNH HUỐNG</button>
-                </div>
-            </div>
-        </div>
+        <a href="/viewer" target="_blank" style="color:yellow; margin-left: 10px; font-weight: bold; text-decoration: none;">📺 MỞ TIVI</a>
     </div>
 </div>
 
 <div class="scoreboard">
     <div class="team" style="border: 2px solid #3399ff">
-        <h2 class="blue-text" id="nameBlue">XANH</h2>
-        <div id="unitBlue">---</div>
+        <h2 class="blue-text" id="nameBlue" style="margin:0;">XANH</h2>
+        <div id="unitBlue" style="margin-bottom: 10px;">---</div>
         <div class="score-display blue-text" id="scoreBlue">0</div>
         <div>
             <button class="adj-btn" onclick="manualAdjust('blue', 1)">+1 (Q)</button>
@@ -100,33 +75,20 @@
     <div class="center-panel">
         <h3 id="roundDisplay" style="color:#0f0; margin:0">HIỆP 1</h3>
         <div id="timer" class="timer">02:00</div>
-        <button onclick="toggleTimer()" style="padding:10px; background: green; color:white; font-weight:bold; width: 100%;">START / STOP (Space)</button>
+        <button onclick="toggleTimer()" style="padding:15px; background: #28a745; color:white; font-weight:bold; width: 100%; border-radius: 5px; border:none; cursor: pointer; font-size: 1.1em;">▶ BẮT ĐẦU / DỪNG (Space)</button>
         
         <div class="lights-box">
-            <div class="lights-section">
-                <span style="color:#3399ff; font-size:0.8em">Xanh +1</span>
-                <div class="light-row" id="row_b1"><div class="light" id="ad_l_b1_1"></div><div class="light" id="ad_l_b1_2"></div><div class="light" id="ad_l_b1_3"></div><div class="light" id="ad_l_b1_4"></div><div class="light" id="ad_l_b1_5"></div></div>
-            </div>
-            <div class="lights-section">
-                <span style="color:#3399ff; font-size:0.8em">Xanh +2</span>
-                <div class="light-row" id="row_b2"><div class="light" id="ad_l_b2_1"></div><div class="light" id="ad_l_b2_2"></div><div class="light" id="ad_l_b2_3"></div><div class="light" id="ad_l_b2_4"></div><div class="light" id="ad_l_b2_5"></div></div>
-            </div>
-            <div class="lights-section">
-                <span style="color:#ff4d4d; font-size:0.8em">Đỏ +1</span>
-                <div class="light-row" id="row_r1"><div class="light" id="ad_l_r1_1"></div><div class="light" id="ad_l_r1_2"></div><div class="light" id="ad_l_r1_3"></div><div class="light" id="ad_l_r1_4"></div><div class="light" id="ad_l_r1_5"></div></div>
-            </div>
-            <div class="lights-section">
-                <span style="color:#ff4d4d; font-size:0.8em">Đỏ +2</span>
-                <div class="light-row" id="row_r2"><div class="light" id="ad_l_r2_1"></div><div class="light" id="ad_l_r2_2"></div><div class="light" id="ad_l_r2_3"></div><div class="light" id="ad_l_r2_4"></div><div class="light" id="ad_l_r2_5"></div></div>
-            </div>
+            <div class="lights-section"><span style="color:#3399ff; font-size:0.8em">Xanh +1</span><div class="light-row" id="row_b1"><div class="light" id="ad_l_b1_1"></div><div class="light" id="ad_l_b1_2"></div><div class="light" id="ad_l_b1_3"></div><div class="light" id="ad_l_b1_4"></div><div class="light" id="ad_l_b1_5"></div></div></div>
+            <div class="lights-section"><span style="color:#3399ff; font-size:0.8em">Xanh +2</span><div class="light-row" id="row_b2"><div class="light" id="ad_l_b2_1"></div><div class="light" id="ad_l_b2_2"></div><div class="light" id="ad_l_b2_3"></div><div class="light" id="ad_l_b2_4"></div><div class="light" id="ad_l_b2_5"></div></div></div>
+            <div class="lights-section"><span style="color:#ff4d4d; font-size:0.8em">Đỏ +1</span><div class="light-row" id="row_r1"><div class="light" id="ad_l_r1_1"></div><div class="light" id="ad_l_r1_2"></div><div class="light" id="ad_l_r1_3"></div><div class="light" id="ad_l_r1_4"></div><div class="light" id="ad_l_r1_5"></div></div></div>
+            <div class="lights-section"><span style="color:#ff4d4d; font-size:0.8em">Đỏ +2</span><div class="light-row" id="row_r2"><div class="light" id="ad_l_r2_1"></div><div class="light" id="ad_l_r2_2"></div><div class="light" id="ad_l_r2_3"></div><div class="light" id="ad_l_r2_4"></div><div class="light" id="ad_l_r2_5"></div></div></div>
         </div>
-        
         <button class="btn-end" onclick="finishMatch()">🏁 KẾT THÚC TRẬN</button>
     </div>
 
     <div class="team" style="border: 2px solid #ff4d4d">
-        <h2 class="red-text" id="nameRed">ĐỎ</h2>
-        <div id="unitRed">---</div>
+        <h2 class="red-text" id="nameRed" style="margin:0;">ĐỎ</h2>
+        <div id="unitRed" style="margin-bottom: 10px;">---</div>
         <div class="score-display red-text" id="scoreRed">0</div>
         <div>
             <button class="adj-btn" onclick="manualAdjust('red', 1)">+1 (O)</button>
@@ -137,34 +99,61 @@
     </div>
 </div>
 
-<div id="logBox" style="position: fixed; bottom: 90px; right: 20px; width: 340px; background: rgba(0,0,0,0.95); border: 2px solid #777; border-radius: 10px; color: #fff; padding: 10px; z-index: 997; text-align: left; box-shadow: 0 0 15px rgba(0,0,0,0.8); transition: all 0.3s ease;">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #555; padding-bottom: 5px;">
-        <div style="color: yellow; font-weight: bold; font-size: 1.1em;">📜 LỊCH SỬ THAO TÁC</div>
-        <button onclick="toggleLogBox()" id="btnToggleLog" style="background: #444; border: 1px solid #777; color: white; cursor: pointer; border-radius: 3px; padding: 2px 10px; font-weight: bold;">▼ THU GỌN</button>
+<div class="var-container">
+    <div class="var-header">
+        <h2 style="color: #ff9900; margin: 0;">🎥 TRẠM QUẢN LÝ VAR</h2>
+        <div>
+            <select id="cameraSelect" style="background: #333; color: white; border: 1px solid #555; margin-right: 10px;">
+                <option value="">-- Camera Mặc định --</option>
+            </select>
+            <button onclick="startVarCamera()" style="background: #28a745; color: white;">BẬT CAMERA</button>
+        </div>
     </div>
-    <div id="logContent" style="display: flex; flex-direction: column; gap: 5px; font-size: 0.95em; height: 220px; overflow-y: auto; padding-right: 5px; margin-top: 10px;"></div>
+    
+    <div class="var-content">
+        <div class="var-box">
+            <div style="color: #00ffcc; font-weight: bold; margin-bottom: 5px;">🔴 TRỰC TIẾP TRÊN SÂN</div>
+            <video id="varLiveVideo" autoplay playsinline muted></video>
+            <div class="var-controls">
+                <button id="btnVarRecord" onclick="toggleVarRecord()" style="background: #cc0000; color: white; width: 120px;">🔴 GHI HÌNH</button>
+                <button id="btnVarPause" onclick="pauseVarRecord()" style="background: #ffcc00; color: black; display: none; width: 120px;">⏸️ TẠM DỪNG</button>
+                <button id="btnVarStop" onclick="stopVarRecord()" style="background: #0066cc; color: white; display: none; width: 120px;">⏹️ CHỐT VIDEO</button>
+            </div>
+        </div>
+        
+        <div class="var-box" id="varReplayWrapper" style="opacity: 0.3; pointer-events: none;">
+            <div style="color: #ff9900; font-weight: bold; margin-bottom: 5px;">⏪ BĂNG HÌNH CHECK VAR</div>
+            <video id="varReplayVideo" controls style="border-color: #ff9900;"></video>
+            <div class="var-controls">
+                <button onclick="setVarSpeed(1.0)" style="background: #444; color: white;">1x</button>
+                <button onclick="setVarSpeed(0.5)" style="background: #444; color: white;">0.5x</button>
+                <button onclick="setVarSpeed(0.25)" style="background: #444; color: white;">0.25x</button>
+                <button onclick="downloadVarVideo()" style="background: #28a745; color: white; margin-left: auto;">💾 LƯU VIDEO</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="logBox">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #555; padding-bottom: 5px;">
+        <div style="color: yellow; font-weight: bold;">📜 LOG THAO TÁC</div>
+        <button onclick="toggleLogBox()" id="btnToggleLog" style="background: #444; border: 1px solid #777; color: white; border-radius: 3px; padding: 2px 10px;">▲ MỞ</button>
+    </div>
+    <div id="logContent"></div>
 </div>
 
 <div class="bottom-config">
-    <div class="time-group">
-        <label>Giờ Đấu (s)</label>
-        <input type="number" id="timeMatch" value="120">
-    </div>
-    <div class="time-group">
-        <label>Giờ Nghỉ (s)</label>
-        <input type="number" id="timeBreak" value="60">
-    </div>
+    <div class="time-group"><label>Giờ Đấu (s)</label><input type="number" id="timeMatch" value="120"></div>
+    <div class="time-group"><label>Giờ Nghỉ (s)</label><input type="number" id="timeBreak" value="60"></div>
     <select id="roundSelect" onchange="setRound()">
-        <option value="HIỆP 1">HIỆP 1</option>
-        <option value="NGHỈ">NGHỈ</option>
-        <option value="HIỆP 2">HIỆP 2</option>
-        <option value="HIỆP PHỤ">HIỆP PHỤ</option>
+        <option value="HIỆP 1">HIỆP 1</option><option value="NGHỈ">NGHỈ</option><option value="HIỆP 2">HIỆP 2</option><option value="HIỆP PHỤ">HIỆP PHỤ</option>
     </select>
     <button onclick="resetAll()">RESET</button>
-    <button onclick="saveToSheet()" style="background: #004080; color: white;">💾 LƯU</button>
+    <button onclick="saveToSheet()" style="background: #004080; color: white;">💾 LƯU BẢNG ĐIỂM</button>
 </div>
 
 <script>
+    // TẤT CẢ LOGIC ĐIỂM SỐ GIỮ NGUYÊN
     var socket = io();
     var scores = { blue: 0, red: 0 };
     var warnings = { blue: 0, red: 0 }; 
@@ -175,20 +164,16 @@
 
     function loadMatches() {
         let btn = document.querySelector("button[onclick='loadMatches()']");
-        let oldText = btn.innerText;
-        btn.innerText = "⏳ Đang tải...";
-        fetch('/get_match_list')
-        .then(r => r.json())
-        .then(data => {
+        let oldText = btn.innerText; btn.innerText = "⏳...";
+        fetch('/get_match_list').then(r => r.json()).then(data => {
             btn.innerText = oldText;
-            if (!Array.isArray(data)) { alert("❌ Lỗi dữ liệu!"); return; }
+            if (!Array.isArray(data)) return alert("❌ Lỗi dữ liệu!");
             matchList = data;
             let s = document.getElementById('matchSelect');
             s.innerHTML = '<option>-- Chọn Trận --</option>';
             data.forEach((m, i) => { s.innerHTML += `<option value="${i}">${m.id}: ${m.blueName} vs ${m.redName}</option>`; });
-            alert("✅ Đã tải thành công " + data.length + " trận đấu!");
-        })
-        .catch(e => { btn.innerText = oldText; alert("❌ Lỗi tải danh sách"); });
+            alert("✅ Tải thành công!");
+        }).catch(e => { btn.innerText = oldText; alert("❌ Lỗi tải danh sách"); });
     }
 
     function setupMatch() { 
@@ -206,69 +191,40 @@
         let w = scores.blue > scores.red ? "XANH" : (scores.red > scores.blue ? "ĐỎ" : "HÒA");
         if(confirm("Lưu kết quả trận đấu?")) {
             fetch('/save_to_sheet', {
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    matchId: currentMatch.id || "TuDo",
-                    round: document.getElementById('roundDisplay').innerText,
-                    blueName: document.getElementById('nameBlue').innerText,
-                    blueScore: scores.blue,
-                    redName: document.getElementById('nameRed').innerText,
-                    redScore: scores.red,
-                    winner: w
-                })
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ matchId: currentMatch.id || "TuDo", round: document.getElementById('roundDisplay').innerText, blueName: document.getElementById('nameBlue').innerText, blueScore: scores.blue, redName: document.getElementById('nameRed').innerText, redScore: scores.red, winner: w })
             }).then(r => r.json()).then(d => { alert("✅ Đã xử lý lệnh lưu!"); });
         }
     }
 
     function setRound() {
-        stopTimer();
-        let r = document.getElementById('roundSelect').value;
-        document.getElementById('roundDisplay').innerText = r;
-        if(r === "NGHỈ") timeRemaining = parseInt(document.getElementById('timeBreak').value);
-        else timeRemaining = parseInt(document.getElementById('timeMatch').value);
-        updateTimerDisplay();
-        syncInfo(); 
+        stopTimer(); let r = document.getElementById('roundSelect').value; document.getElementById('roundDisplay').innerText = r;
+        if(r === "NGHỈ") timeRemaining = parseInt(document.getElementById('timeBreak').value); else timeRemaining = parseInt(document.getElementById('timeMatch').value);
+        updateTimerDisplay(); syncInfo(); 
     }
     
     function toggleTimer() { if(timerInterval) stopTimer(); else timerInterval=setInterval(()=>{timeRemaining--; updateTimerDisplay(); if(timeRemaining<=0) stopTimer();},1000); }
     function stopTimer() { clearInterval(timerInterval); timerInterval=null; }
     function updateTimerDisplay() { let m=Math.floor(timeRemaining/60).toString().padStart(2,'0'); let s=(timeRemaining%60).toString().padStart(2,'0'); document.getElementById('timer').innerText=`${m}:${s}`; socket.emit('admin_update',{type:'timer', timeStr:`${m}:${s}`}); }
     
-    // --- Tính năng Thu Gọn / Mở Rộng Hộp Log ---
     function toggleLogBox() {
-        let content = document.getElementById('logContent');
-        let btn = document.getElementById('btnToggleLog');
-        if (content.style.display === 'none') {
-            content.style.display = 'flex';
-            btn.innerText = '▼ THU GỌN';
-        } else {
-            content.style.display = 'none';
-            btn.innerText = '▲ MỞ RỘNG';
-        }
+        let content = document.getElementById('logContent'); let btn = document.getElementById('btnToggleLog');
+        if (content.style.display === 'none' || content.style.display === '') { content.style.display = 'flex'; btn.innerText = '▼ ĐÓNG'; } 
+        else { content.style.display = 'none'; btn.innerText = '▲ MỞ'; }
     }
 
     function addLogEntry(msg, type) {
-        let logDiv = document.getElementById('logContent');
-        if(!logDiv) return;
-        let color = (type === 'score') ? '#00ffcc' : '#aaaaaa';
-        let fontWeight = (type === 'score') ? 'bold' : 'normal';
+        let logDiv = document.getElementById('logContent'); if(!logDiv) return;
+        let color = (type === 'score') ? '#00ffcc' : '#aaaaaa'; let fontWeight = (type === 'score') ? 'bold' : 'normal';
         let border = (type === 'score') ? 'border-bottom: 1px dashed #555; padding-bottom: 5px; margin-bottom: 5px;' : '';
-        let entry = `<div style="color: ${color}; font-weight: ${fontWeight}; ${border}">${msg}</div>`;
-        logDiv.innerHTML = entry + logDiv.innerHTML;
-        if (logDiv.children.length > 100) { logDiv.removeChild(logDiv.lastChild); }
+        logDiv.innerHTML = `<div style="color: ${color}; font-weight: ${fontWeight}; ${border}">${msg}</div>` + logDiv.innerHTML;
+        if (logDiv.children.length > 100) logDiv.removeChild(logDiv.lastChild);
     }
 
     socket.on('server_send_vote', function(d) {
-        let sideCode = d.side === 'blue' ? 'b' : 'r';
-        let lightId = `ad_l_${sideCode}${d.points}_${d.judge_id}`;
-        let light = document.getElementById(lightId);
-        let colorClass = d.side === 'blue' ? 'on-blue' : 'on-red';
-        if(light) { light.classList.add(colorClass); setTimeout(() => light.classList.remove(colorClass), 700); }
-        let teamName = d.side === 'blue' ? "Xanh" : "Đỏ";
-        let action = d.points == 1 ? "Tay(+1)" : "Chân(+2)";
-        let timeNow = document.getElementById('timer').innerText;
-        addLogEntry(`[${timeNow}] GĐ ${d.judge_id} bấm ${action} ${teamName}`, 'raw');
+        let sideCode = d.side === 'blue' ? 'b' : 'r'; let lightId = `ad_l_${sideCode}${d.points}_${d.judge_id}`; let light = document.getElementById(lightId);
+        if(light) { light.classList.add(d.side === 'blue' ? 'on-blue' : 'on-red'); setTimeout(() => light.classList.remove(d.side === 'blue' ? 'on-blue' : 'on-red'), 700); }
+        addLogEntry(`[${document.getElementById('timer').innerText}] GĐ ${d.judge_id} bấm ${d.points == 1 ? "Tay" : "Chân"} ${d.side === 'blue' ? "Xanh" : "Đỏ"}`, 'raw');
         handleConsensus(d);
     });
 
@@ -277,137 +233,114 @@
     
     let voteBuffer = [];
     function handleConsensus(d) {
-        let now = Date.now();
-        voteBuffer.push({...d, time: now});
-        voteBuffer = voteBuffer.filter(v => now - v.time <= 1000); 
-        let valid = voteBuffer.filter(v => v.side === d.side && v.points === d.points);
-        let judges = [...new Set(valid.map(v => v.judge_id))];
+        let now = Date.now(); voteBuffer.push({...d, time: now}); voteBuffer = voteBuffer.filter(v => now - v.time <= 1000); 
+        let valid = voteBuffer.filter(v => v.side === d.side && v.points === d.points); let judges = [...new Set(valid.map(v => v.judge_id))];
         if(judges.length >= 3) { 
             updateScore(d.side, d.points); 
-            let teamName = d.side === 'blue' ? "XANH" : "ĐỎ";
-            let timeNow = document.getElementById('timer').innerText;
-            addLogEntry(`⭐ [${timeNow}] ${teamName} CỘNG ${d.points} ĐIỂM (GĐ: ${judges.join(', ')})`, 'score');
+            addLogEntry(`⭐ [${document.getElementById('timer').innerText}] ${d.side === 'blue' ? "XANH" : "ĐỎ"} CỘNG ${d.points} ĐIỂM (GĐ: ${judges.join(', ')})`, 'score');
             voteBuffer = voteBuffer.filter(v => !(v.side === d.side && v.points === d.points)); 
         }
     }
     
-    function updateScore(s,v) { 
-        scores[s]+=v; 
-        document.getElementById(s==='blue'?'scoreBlue':'scoreRed').innerText=scores[s]; 
-        socket.emit('admin_update',{type:'score', blue:scores.blue, red:scores.red}); 
-    }
-    
-    function manualAdjust(s,v) { 
-        updateScore(s,v); 
-        let timeNow = document.getElementById('timer').innerText;
-        let teamName = s === 'blue' ? "XANH" : "ĐỎ";
-        addLogEntry(`⚙️ [${timeNow}] Admin chỉnh tay: ${v > 0 ? '+'+v : v} điểm cho ${teamName}`, 'score');
-    }
+    function updateScore(s,v) { scores[s]+=v; document.getElementById(s==='blue'?'scoreBlue':'scoreRed').innerText=scores[s]; socket.emit('admin_update',{type:'score', blue:scores.blue, red:scores.red}); }
+    function manualAdjust(s,v) { updateScore(s,v); addLogEntry(`⚙️ [${document.getElementById('timer').innerText}] Admin chỉnh tay: ${v > 0 ? '+'+v : v} điểm cho ${s === 'blue' ? "XANH" : "ĐỎ"}`, 'score'); }
 
     function addWarning(side) {
         warnings[side]++;
         if (warnings[side] >= 3) {
-            updateScore(side, -2);
-            warnings[side] = 0; 
+            updateScore(side, -2); warnings[side] = 0; 
             alert(`[HỆ THỐNG] VĐV ${side === 'blue' ? 'XANH' : 'ĐỎ'} đã vi phạm 3 lần. TỰ ĐỘNG TRỪ 2 ĐIỂM!`);
-            let timeNow = document.getElementById('timer').innerText;
-            let teamName = side === 'blue' ? "XANH" : "ĐỎ";
-            addLogEntry(`❌ [${timeNow}] ${teamName} LỖI 3 LẦN (-2 ĐIỂM)`, 'score');
+            addLogEntry(`❌ [${document.getElementById('timer').innerText}] ${side === 'blue' ? "XANH" : "ĐỎ"} LỖI 3 LẦN (-2 ĐIỂM)`, 'score');
         }
         document.getElementById('warnBtn_' + side).innerText = `⚠ Lỗi (${warnings[side]})`;
         socket.emit('admin_update', {type: 'warning', blueWarn: warnings.blue, redWarn: warnings.red});
     }
 
     function resetAll() { 
-        scores = {blue: 0, red: 0}; 
-        warnings = {blue: 0, red: 0}; 
-        updateScore('blue', 0); 
-        updateScore('red', 0); 
-        document.getElementById('warnBtn_blue').innerText = `⚠ Lỗi (0)`;
-        document.getElementById('warnBtn_red').innerText = `⚠ Lỗi (0)`;
-        socket.emit('admin_update', {type: 'reset'}); 
-        socket.emit('admin_update', {type: 'warning', blueWarn: 0, redWarn: 0});
-        let logDiv = document.getElementById('logContent');
-        if(logDiv) logDiv.innerHTML = "";
+        scores = {blue: 0, red: 0}; warnings = {blue: 0, red: 0}; updateScore('blue', 0); updateScore('red', 0); 
+        document.getElementById('warnBtn_blue').innerText = `⚠ Lỗi (0)`; document.getElementById('warnBtn_red').innerText = `⚠ Lỗi (0)`;
+        socket.emit('admin_update', {type: 'reset'}); socket.emit('admin_update', {type: 'warning', blueWarn: 0, redWarn: 0});
+        if(document.getElementById('logContent')) document.getElementById('logContent').innerHTML = "";
         setRound(); 
     }
     
     function syncInfo() { 
-        socket.emit('admin_update', {
-            type: 'info', 
-            blueName: document.getElementById('nameBlue').innerText, 
-            blueUnit: document.getElementById('unitBlue').innerText, 
-            redName: document.getElementById('nameRed').innerText, 
-            redUnit: document.getElementById('unitRed').innerText, 
-            round: document.getElementById('roundDisplay').innerText,
-            category: currentMatch.category || "" 
-        }); 
+        socket.emit('admin_update', { type: 'info', blueName: document.getElementById('nameBlue').innerText, blueUnit: document.getElementById('unitBlue').innerText, redName: document.getElementById('nameRed').innerText, redUnit: document.getElementById('unitRed').innerText, round: document.getElementById('roundDisplay').innerText, category: currentMatch.category || "" }); 
         socket.emit('admin_update', {type: 'warning', blueWarn: warnings.blue, redWarn: warnings.red});
     }
     
-    document.addEventListener('keydown', e=>{if(e.code==='Space'){e.preventDefault();toggleTimer()} if(e.key==='q'||e.key==='Q')manualAdjust('blue',1); if(e.key==='w'||e.key==='W')manualAdjust('blue',2); if(e.key==='o'||e.key==='O')manualAdjust('red',1); if(e.key==='p'||e.key==='P')manualAdjust('red',2);});
+    document.addEventListener('keydown', e=>{if(e.code==='Space'){if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {e.preventDefault();toggleTimer()}} if(e.key==='q'||e.key==='Q')manualAdjust('blue',1); if(e.key==='w'||e.key==='W')manualAdjust('blue',2); if(e.key==='o'||e.key==='O')manualAdjust('red',1); if(e.key==='p'||e.key==='P')manualAdjust('red',2);});
+
 
     // ==========================================
-    // MÔ-ĐUN VAR POP-UP (ÉP XUNG CAMERA HD)
+    // LOGIC CAMERA VÀ VAR
     // ==========================================
+    let currentStream = null;
     let varMediaRecorder;
     let varRecordedChunks = [];
     let varVideoBlob;
 
-    async function toggleVarPanel() {
-        let panel = document.getElementById('varPanel');
-        let videoObj = document.getElementById('varLiveVideo');
-        
-        if (panel.style.display === 'none' || panel.style.display === '') {
-            panel.style.display = 'flex'; // Hiển thị dưới dạng Flex modal
-            try {
-                // ÉP XUNG CAMERA: Cố gắng lấy độ phân giải HD hoặc FullHD thay vì mặc định
-                const constraints = {
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 1280, max: 1920 },
-                        height: { ideal: 720, max: 1080 }
-                    },
-                    audio: false
-                };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoObj.srcObject = stream;
-            } catch (err) {
-                alert("Không thể kết nối Camera chuẩn HD. Vui lòng kiểm tra quyền truy cập!");
-            }
-        } else {
-            panel.style.display = 'none';
-            // Tắt hoàn toàn camera để giảm tải máy khi đóng Pop-up
-            if (videoObj.srcObject) {
-                videoObj.srcObject.getTracks().forEach(track => track.stop());
-                videoObj.srcObject = null;
-            }
+    // Quét danh sách Camera kết nối vào máy
+    async function fetchCameras() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevs = devices.filter(d => d.kind === 'videoinput');
+            const sel = document.getElementById('cameraSelect');
+            let currentVal = sel.value;
+            sel.innerHTML = '<option value="">-- Camera Mặc định --</option>';
+            videoDevs.forEach((d, i) => {
+                sel.innerHTML += `<option value="${d.deviceId}">${d.label || 'Camera ' + (i+1)}</option>`;
+            });
+            if(currentVal) sel.value = currentVal;
+        } catch(e) { console.log("Chưa cấp quyền xem danh sách camera"); }
+    }
+
+    async function startVarCamera() {
+        let camId = document.getElementById('cameraSelect').value;
+        let constraints = { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
+        if (camId) constraints.video.deviceId = { exact: camId };
+        else constraints.video.facingMode = "environment"; // Dùng cam sau nếu chạy trên điện thoại/ipad
+
+        try {
+            if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            document.getElementById('varLiveVideo').srcObject = currentStream;
+            
+            // Quét lại tên Camera sau khi đã được cấp quyền (sẽ hiện tên đầy đủ như DroidCam, OBS Camera...)
+            fetchCameras();
+        } catch (err) {
+            alert("Lỗi truy cập Camera. Hãy chắc chắn bạn đã cho phép trên trình duyệt!");
         }
     }
 
     function toggleVarRecord() {
         let liveVideo = document.getElementById('varLiveVideo');
-        if(!liveVideo.srcObject) return alert("Camera chưa sẵn sàng!");
+        if(!liveVideo.srcObject) return alert("Vui lòng bấm 'BẬT CAMERA' trước khi quay!");
 
         if(!varMediaRecorder || varMediaRecorder.state === 'inactive') {
             varRecordedChunks = [];
-            // Sử dụng mimeType tương thích cao
             varMediaRecorder = new MediaRecorder(liveVideo.srcObject, { mimeType: 'video/webm' });
-            
             varMediaRecorder.ondataavailable = e => { if (e.data.size > 0) varRecordedChunks.push(e.data); };
             
             varMediaRecorder.onstop = () => {
                 varVideoBlob = new Blob(varRecordedChunks, { type: 'video/webm' });
                 document.getElementById('varReplayVideo').src = URL.createObjectURL(varVideoBlob);
-                document.getElementById('varReplayBox').style.display = 'block';
+                
+                // Mở khóa màn hình Replay
+                let replayWrapper = document.getElementById('varReplayWrapper');
+                replayWrapper.style.opacity = "1";
+                replayWrapper.style.pointerEvents = "auto";
             };
             
             varMediaRecorder.start();
-            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG QUAY...";
+            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI HÌNH";
             document.getElementById('btnVarRecord').style.background = "#8b0000";
             document.getElementById('btnVarPause').style.display = 'inline-block';
             document.getElementById('btnVarStop').style.display = 'inline-block';
-            document.getElementById('varReplayBox').style.display = 'none';
+            
+            // Xám màn hình Replay đi để báo hiệu đang quay trận mới
+            document.getElementById('varReplayWrapper').style.opacity = "0.3";
+            document.getElementById('varReplayWrapper').style.pointerEvents = "none";
         }
     }
 
@@ -416,12 +349,12 @@
             varMediaRecorder.pause();
             document.getElementById('btnVarPause').innerText = "▶️ TIẾP TỤC";
             document.getElementById('btnVarPause').style.background = "#28a745"; 
-            document.getElementById('btnVarRecord').innerText = "⏸️ ĐÃ TẠM DỪNG";
+            document.getElementById('btnVarRecord').innerText = "⏸️ TẠM DỪNG";
         } else if (varMediaRecorder && varMediaRecorder.state === 'paused') {
             varMediaRecorder.resume();
             document.getElementById('btnVarPause').innerText = "⏸️ TẠM DỪNG";
             document.getElementById('btnVarPause').style.background = "#ffcc00"; 
-            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG QUAY...";
+            document.getElementById('btnVarRecord').innerText = "🔴 ĐANG GHI HÌNH";
         }
     }
 
@@ -435,17 +368,14 @@
         }
     }
 
-    function setVarSpeed(rate) {
-        document.getElementById('varReplayVideo').playbackRate = rate;
-    }
+    function setVarSpeed(rate) { document.getElementById('varReplayVideo').playbackRate = rate; }
 
     function downloadVarVideo() {
         if(!varVideoBlob) return;
         let matchCode = currentMatch && currentMatch.id ? currentMatch.id : "TuDo";
         let roundNum = document.getElementById('roundDisplay') ? document.getElementById('roundDisplay').innerText : "HiepX";
-        
         let defaultFileName = `VAR_Tran_${matchCode}_${roundNum}`;
-        let fileName = prompt("Nhập tên cho tình huống video này để lưu trữ:", defaultFileName);
+        let fileName = prompt("Lưu tình huống VAR:", defaultFileName);
         
         if(fileName) { 
             const a = document.createElement('a');
