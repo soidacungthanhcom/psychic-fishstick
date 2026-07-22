@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         :root { --bg-color: #121212; --text-main: #ffffff; --accent-color: #00ffcc; --danger-color: #ff4d4d; --warning-color: #ff9900; }
-        body { background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+        body { background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden;}
         
         /* MÀN HÌNH CHÀO HỎI (LOGIN) */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -16,36 +16,54 @@
         .login-btn { background: #333; color: white; border: 2px solid #555; padding: 20px; font-size: 1.5rem; font-weight: bold; border-radius: 10px; cursor: pointer; }
         .login-btn:active { background: #00ffcc; color: black; }
         
+        /* MÀN HÌNH KHÓA (KHI ADMIN CHỐT ĐIỂM) */
+        #lockOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #lockOverlay h1 { color: #ffcc00; font-size: 2.2rem; text-align: center; margin: 0;}
+        
         /* MÀN HÌNH CHÍNH */
         #mainApp { display: none; flex-direction: column; height: 100%; }
-        .header-info { display: flex; justify-content: space-between; background: #1e1e1e; padding: 10px 15px; border-radius: 8px; border: 1px solid #333; align-items: center;}
+        
+        /* HEADER & BẢNG ĐIỂM */
+        .top-section { padding: 10px; background: #1a1a1a; border-bottom: 1px solid #333; z-index: 5; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
+        .header-info { display: flex; justify-content: space-between; align-items: center;}
         .judge-name { font-size: 1.2rem; font-weight: 900; color: #ffcc00; }
         .cat-name { font-size: 0.9rem; color: #aaa; font-weight: bold;}
         
-        .score-board { text-align: center; margin: 15px 0; }
-        .score-value { font-size: 5rem; font-weight: 900; color: var(--accent-color); line-height: 1; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
+        .score-board { text-align: center; margin-top: 10px; }
+        .score-value { font-size: 4.5rem; font-weight: 900; color: var(--accent-color); line-height: 1; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
         .history-text { font-size: 0.9rem; color: #888; height: 20px; margin-top: 5px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* DANH SÁCH NÚT LỖI CÓ SỐ LẦN (BADGE) */
-        .btn-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding-bottom: 80px; align-content: start; }
-        .deduct-btn { position: relative; background: #2b1111; border: 1px solid #8b0000; color: #ff8080; padding: 15px 5px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70px; }
-        .deduct-btn:active { background: var(--danger-color); color: #fff; }
-        .deduct-btn .val { font-size: 1.4rem; margin-bottom: 3px; color: var(--danger-color); }
-        .times-badge { position: absolute; top: -5px; right: -5px; background: red; color: white; width: 25px; height: 25px; border-radius: 50%; font-size: 0.9rem; font-weight: bold; display: none; align-items: center; justify-content: center; box-shadow: 0 0 5px black; border: 2px solid #fff;}
+        /* KHU VỰC CUỘN NÚT BẤM (CHIA 2 PHẦN) */
+        .scroll-area { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 90px; }
+        
+        .section-title { font-size: 0.9rem; font-weight: bold; color: #fff; margin-bottom: 10px; margin-top: 10px; padding-bottom: 5px; border-bottom: 1px solid #444; letter-spacing: 1px; }
+        .title-multi { color: #ff6666; border-bottom-color: #ff6666; }
+        .title-single { color: #ffcc00; border-bottom-color: #ffcc00; margin-top: 20px;}
+        
+        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        
+        /* NÚT TRỪ NHIỀU LẦN (MÀU ĐỎ SẪM) */
+        .btn-multi { position: relative; background: #2b1111; border: 1px solid #8b0000; color: #ffaaaa; padding: 12px 5px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65px; transition: 0.1s;}
+        .btn-multi:active { background: var(--danger-color); color: #fff; }
+        .btn-multi .val { font-size: 1.2rem; margin-bottom: 3px; color: var(--danger-color); }
+        .times-badge { position: absolute; top: -6px; right: -6px; background: red; color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 0.9rem; font-weight: bold; display: none; align-items: center; justify-content: center; box-shadow: 0 0 5px black; border: 2px solid #fff;}
 
-        /* THANH ĐIỀU KHIỂN & MÀN HÌNH KHÓA */
-        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; padding: 12px; display: flex; gap: 12px; border-top: 1px solid #333; z-index: 10; }
+        /* NÚT TRỪ 1 LẦN / CÔNG TẮC (MÀU CAM SẪM) */
+        .btn-single { background: #332200; border: 1px solid #996600; color: #ffdd99; padding: 12px 5px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65px; transition: 0.3s;}
+        .btn-single .val { font-size: 1.2rem; margin-bottom: 3px; color: var(--warning-color); }
+        .btn-single-active { background: var(--warning-color) !important; color: #000 !important; border-color: #fff !important; box-shadow: 0 0 15px rgba(255,153,0,0.5); }
+        .btn-single-active .val { color: #000 !important; }
+
+        /* THANH ĐIỀU KHIỂN & GỬI ĐIỂM */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; padding: 12px; display: flex; gap: 12px; border-top: 1px solid #333; z-index: 10; box-shadow: 0 -4px 10px rgba(0,0,0,0.5);}
         .action-btn { flex: 1; padding: 15px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; }
         .btn-undo { background: var(--warning-color); color: #000; flex: 0.8; }
         .btn-submit { background: #0066cc; color: #fff; flex: 1.2; }
-        
-        #lockOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #lockOverlay h1 { color: #ffcc00; font-size: 2rem; text-align: center;}
     </style>
 </head>
 <body>
 
-    <!-- MÀN HÌNH KHAI BÁO GIÁM ĐỊNH -->
+    <!-- MÀN HÌNH CHÀO HỎI (LOGIN) -->
     <div id="loginOverlay">
         <h2>XÁC NHẬN VỊ TRÍ CỦA BẠN</h2>
         <div class="login-grid">
@@ -57,28 +75,35 @@
         </div>
     </div>
 
-    <!-- MÀN HÌNH KHÓA (KHI ADMIN CHỐT ĐIỂM) -->
+    <!-- MÀN HÌNH KHÓA -->
     <div id="lockOverlay">
         <h1>🔒 ĐÃ CHỐT ĐIỂM</h1>
-        <p style="color: #aaa;">Vui lòng chờ Admin mở trận mới</p>
+        <p style="color: #aaa; margin-top: 10px;">Vui lòng chờ Admin mở trận mới</p>
     </div>
 
     <!-- MÀN HÌNH CHÍNH -->
     <div id="mainApp">
-        <div class="header-info">
-            <div class="judge-name" id="myJudgeName">GĐ X</div>
-            <div class="cat-name" id="currentCategory">Đơn Luyện (Max 100)</div>
+        <div class="top-section">
+            <div class="header-info">
+                <div class="judge-name" id="myJudgeName">GĐ X</div>
+                <div class="cat-name" id="currentCategory">Đơn Luyện (Max 100)</div>
+            </div>
+            <div class="score-board">
+                <div class="score-value" id="currentScoreDisplay">100</div>
+                <div class="history-text" id="historyDisplay">Sẵn sàng chấm điểm</div>
+            </div>
         </div>
 
-        <div class="score-board">
-            <div class="score-value" id="currentScoreDisplay">100</div>
-            <div class="history-text" id="historyDisplay">Chưa có lỗi nào</div>
+        <div class="scroll-area">
+            <div class="section-title title-multi">🔴 LỖI KỸ THUẬT (BẤM ĐỂ ĐẾM LẦN)</div>
+            <div class="btn-grid" id="multiGrid"></div>
+            
+            <div class="section-title title-single">⭐ ĐÁNH GIÁ TỔNG THỂ (BẬT/TẮT)</div>
+            <div class="btn-grid" id="singleGrid"></div>
         </div>
-
-        <div class="btn-grid" id="buttonGrid"></div>
 
         <div class="bottom-bar">
-            <button class="action-btn btn-undo" onclick="undoLast()">⏪ H.Tác</button>
+            <button class="action-btn btn-undo" onclick="undoMulti()">⏪ H.Tác</button>
             <button class="action-btn btn-submit" id="btnSubmit" onclick="submitScore()">🚀 GỬI ĐIỂM</button>
         </div>
     </div>
@@ -88,30 +113,114 @@
         let myJudgeId = 0;
         let currentScore = 100;
         let maxScore = 100;
-        let deductHistory = [];
-        let deductCounts = {}; // Lưu số lần bấm của mỗi lỗi
+        
+        // Quản lý trạng thái lỗi
+        let multiHistory = []; // Stack để Hoàn tác lỗi nhiều lần
+        let multiCounts = {};  // Đếm số lần bấm của mỗi lỗi Multi
+        let singleStates = {}; // Trạng thái Bật/Tắt của lỗi Single
 
+        // ========================================================
+        // BỘ KHUNG DỮ LIỆU CHẤM ĐIỂM (DATA-DRIVEN FRAMEWORK)
+        // Dễ dàng thêm, bớt, sửa lỗi ở đây mà không cần chạm vào UI
+        // ========================================================
         const criteriaData = {
-            'DON_LUYEN': [{ val: -1, label: 'Sai động tác' }, { val: -2, label: 'Kết thúc sai vị trí' }, { val: -2, label: 'Ngập ngừng' }, { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Vũ khí chạm nhẹ' }, { val: -5, label: 'Vũ khí chạm nặng' }, { val: -2, label: 'Quyền, cước chậm' }, { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' }, { val: -2, label: 'Quá thời gian' }, { val: -1, label: 'Tấn sai kỹ thuật' }, { val: -2, label: 'Mất thăng bằng' }, { val: -2, label: 'Thiếu uyển chuyển' }, { val: -1, label: 'Thiếu ấn tượng' }],
-            'SONG_LUYEN': [{ val: -1, label: 'Sai động tác' }, { val: -2, label: 'Ngập ngừng' }, { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Vũ khí chạm nhẹ' }, { val: -5, label: 'Vũ khí chạm nặng' }, { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' }, { val: -1, label: 'Ra khỏi vạch' }, { val: -1, label: 'Thiếu nhịp nhàng' }, { val: -2, label: 'Quyền, cước chậm' }, { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' }, { val: -2, label: 'Chậm 5s quy định' }, { val: -1, label: 'Thiếu ấn tượng' }],
-            'DONG_DOI': [{ val: -1, label: 'Sai động tác' }, { val: -2, label: 'Kết thúc sai vị trí' }, { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Quyền, cước chậm' }, { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' }, { val: -1, label: 'Tấn sai kỹ thuật' }, { val: -2, label: 'Mất thăng bằng' }, { val: -2, label: 'Không đồng đều' }, { val: -1, label: 'Thiếu ấn tượng' }],
-            'DA_LUYEN': [{ val: -2, label: 'Cấu trúc/Tấn công ko rõ' }, { val: -2, label: 'Không liên tục' }, { val: -2, label: 'Ngập ngừng' }, { val: -10, label: 'Chấn thương/Quên bài' }, { val: -3, label: 'Thiếu 1 đòn cơ bản' }, { val: -2, label: 'Phản đòn chậm yếu' }, { val: -2, label: 'Phối hợp không tốt' }, { val: -2, label: 'Thể lực không tốt' }, { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' }, { val: -1, label: 'Ra khỏi vạch' }, { val: -2, label: 'Không nhịp nhàng' }, { val: -2, label: 'Thiếu ấn tượng' }],
-            'TU_VE_NU': [{ val: -2, label: 'Cấu trúc/Tấn công ko rõ' }, { val: -2, label: 'Không liên tục' }, { val: -2, label: 'Ngập ngừng' }, { val: -2, label: 'Diễu cợt/Ko nghiêm túc' }, { val: -3, label: 'Thiếu 1 đòn cơ bản' }, { val: -2, label: 'Thiếu dứt khoát' }, { val: -2, label: 'Phối hợp/Tránh né chậm' }, { val: -2, label: 'Thể lực không tốt' }, { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' }, { val: -1, label: 'Ra khỏi vạch' }, { val: -2, label: 'Không nhịp nhàng' }, { val: -2, label: 'Thiếu ấn tượng' }]
+            'DON_LUYEN': [
+                // Lỗi Kỹ thuật (Trừ theo lần)
+                { id: 'dl_m1', label: 'Sai động tác', val: -1, type: 'multi' },
+                { id: 'dl_m2', label: 'Ngập ngừng', val: -2, type: 'multi' },
+                { id: 'dl_m3', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' },
+                { id: 'dl_m4', label: 'Tấn sai kỹ thuật', val: -1, type: 'multi' },
+                { id: 'dl_m5', label: 'Mất thăng bằng', val: -2, type: 'multi' },
+                
+                // Lỗi Đánh giá (Chỉ trừ 1 lần / Bật Tắt)
+                { id: 'dl_s1', label: 'Sai vị trí kết thúc', val: -2, type: 'single' },
+                { id: 'dl_s2', label: 'VK chạm nhẹ', val: -2, type: 'single' },
+                { id: 'dl_s3', label: 'VK chạm nặng', val: -5, type: 'single' },
+                { id: 'dl_s4', label: 'Quyền, cước chậm', val: -2, type: 'single' },
+                { id: 'dl_s5', label: 'Thiếu uy lực', val: -2, type: 'single' },
+                { id: 'dl_s6', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' },
+                { id: 'dl_s7', label: 'Quá thời gian quy định', val: -2, type: 'single' },
+                { id: 'dl_s8', label: 'Thiếu uyển chuyển', val: -2, type: 'single' },
+                { id: 'dl_s9', label: 'Thiếu ấn tượng', val: -1, type: 'single' }
+            ],
+            'SONG_LUYEN': [
+                { id: 'sl_m1', label: 'Sai động tác', val: -1, type: 'multi' },
+                { id: 'sl_m2', label: 'Ngập ngừng', val: -2, type: 'multi' },
+                { id: 'sl_m3', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' },
+                { id: 'sl_m4', label: 'Ra khỏi vạch', val: -1, type: 'multi' },
+                
+                { id: 'sl_s1', label: 'VK chạm nhẹ', val: -2, type: 'single' },
+                { id: 'sl_s2', label: 'VK chạm nặng', val: -5, type: 'single' },
+                { id: 'sl_s3', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' },
+                { id: 'sl_s4', label: 'Ngã không an toàn', val: -2, type: 'single' },
+                { id: 'sl_s5', label: 'Thiếu nhịp nhàng', val: -1, type: 'single' },
+                { id: 'sl_s6', label: 'Quyền, cước chậm', val: -2, type: 'single' },
+                { id: 'sl_s7', label: 'Thiếu uy lực', val: -2, type: 'single' },
+                { id: 'sl_s8', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' },
+                { id: 'sl_s9', label: 'Chậm 5s quy định', val: -2, type: 'single' },
+                { id: 'sl_s10', label: 'Thiếu ấn tượng', val: -1, type: 'single' }
+            ],
+            'DONG_DOI': [
+                { id: 'dd_m1', label: 'Sai động tác', val: -1, type: 'multi' },
+                { id: 'dd_m2', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' },
+                { id: 'dd_m3', label: 'Tấn sai kỹ thuật', val: -1, type: 'multi' },
+                { id: 'dd_m4', label: 'Mất thăng bằng', val: -2, type: 'multi' },
+                { id: 'dd_m5', label: 'Không đồng đều', val: -2, type: 'multi' },
+                
+                { id: 'dd_s1', label: 'Sai vị trí kết thúc', val: -2, type: 'single' },
+                { id: 'dd_s2', label: 'Quyền, cước chậm', val: -2, type: 'single' },
+                { id: 'dd_s3', label: 'Thiếu uy lực', val: -2, type: 'single' },
+                { id: 'dd_s4', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' },
+                { id: 'dd_s5', label: 'Thiếu ấn tượng', val: -1, type: 'single' }
+            ],
+            'DA_LUYEN': [
+                { id: 'dal_m1', label: 'Ngập ngừng', val: -2, type: 'multi' },
+                { id: 'dal_m2', label: 'Ra khỏi vạch', val: -1, type: 'multi' },
+                
+                { id: 'dal_s1', label: 'Cấu trúc/Tấn công kém', val: -2, type: 'single' },
+                { id: 'dal_s2', label: 'Không liên tục', val: -2, type: 'single' },
+                { id: 'dal_s3', label: 'Chấn thương/Quên bài', val: -10, type: 'single' },
+                { id: 'dal_s4', label: 'Thiếu 1 đòn cơ bản', val: -3, type: 'single' },
+                { id: 'dal_s5', label: 'Phản đòn chậm yếu', val: -2, type: 'single' },
+                { id: 'dal_s6', label: 'Phối hợp không tốt', val: -2, type: 'single' },
+                { id: 'dal_s7', label: 'Thể lực không tốt', val: -2, type: 'single' },
+                { id: 'dal_s8', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' },
+                { id: 'dal_s9', label: 'Ngã không an toàn', val: -2, type: 'single' },
+                { id: 'dal_s10', label: 'Không nhịp nhàng', val: -2, type: 'single' },
+                { id: 'dal_s11', label: 'Thiếu ấn tượng', val: -2, type: 'single' }
+            ],
+            'TU_VE_NU': [
+                { id: 'tv_m1', label: 'Ngập ngừng', val: -2, type: 'multi' },
+                { id: 'tv_m2', label: 'Ra khỏi vạch', val: -1, type: 'multi' },
+                
+                { id: 'tv_s1', label: 'Cấu trúc/Tấn công kém', val: -2, type: 'single' },
+                { id: 'tv_s2', label: 'Không liên tục', val: -2, type: 'single' },
+                { id: 'tv_s3', label: 'Diễu cợt/Ko nghiêm túc', val: -2, type: 'single' },
+                { id: 'tv_s4', label: 'Thiếu 1 đòn cơ bản', val: -3, type: 'single' },
+                { id: 'tv_s5', label: 'Quyền cước thiếu uy lực', val: -2, type: 'single' },
+                { id: 'tv_s6', label: 'Tránh né chậm', val: -2, type: 'single' },
+                { id: 'tv_s7', label: 'Thể lực không tốt', val: -2, type: 'single' },
+                { id: 'tv_s8', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' },
+                { id: 'tv_s9', label: 'Ngã không an toàn', val: -2, type: 'single' },
+                { id: 'tv_s10', label: 'Thiếu nhịp nhàng', val: -2, type: 'single' },
+                { id: 'tv_s11', label: 'Thiếu ấn tượng', val: -2, type: 'single' }
+            ]
         };
 
+        // --- ĐĂNG NHẬP ---
         function loginJudge(id) {
             myJudgeId = id;
             document.getElementById('myJudgeName').innerText = "GIÁM ĐỊNH " + id;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'flex';
-            loadButtons('DON_LUYEN'); // Mặc định tải Đơn luyện lúc mới vào
+            loadUI('DON_LUYEN');
         }
 
-        // LẮNG NGHE LỆNH TỪ ADMIN (Thay đổi hạng mục & Mở/Khóa trận)
+        // --- LẮNG NGHE LỆNH TỪ ADMIN ---
         socket.on('quyen_judge_sync', function(config) {
             maxScore = config.max_score;
             document.getElementById('currentCategory').innerText = `${config.category} (Max ${maxScore})`;
-            loadButtons(config.category);
+            loadUI(config.category);
         });
 
         socket.on('quyen_lock_judges', function() {
@@ -123,85 +232,143 @@
             resetScore();
             document.getElementById('btnSubmit').innerText = "🚀 GỬI ĐIỂM";
             document.getElementById('btnSubmit').style.background = "#0066cc";
+            document.getElementById('btnSubmit').disabled = false;
         });
 
-        // TẠO GIAO DIỆN NÚT VÀ CƠ CHẾ ĐẾM
-        function loadButtons(cat) {
-            const grid = document.getElementById('buttonGrid');
-            grid.innerHTML = '';
+        // --- XÂY DỰNG GIAO DIỆN TỪ BỘ KHUNG DỮ LIỆU ---
+        let currentCriteria = [];
+        function loadUI(cat) {
+            currentCriteria = criteriaData[cat];
+            let multiGrid = document.getElementById('multiGrid');
+            let singleGrid = document.getElementById('singleGrid');
+            multiGrid.innerHTML = ''; singleGrid.innerHTML = '';
             
-            criteriaData[cat].forEach((item, index) => {
+            currentCriteria.forEach(item => {
                 let btn = document.createElement('div');
-                btn.className = 'deduct-btn';
-                btn.onclick = () => recordDeduction(index, item.val, item.label);
-                
-                // Thêm một cái Badge ẩn ở góc nút
-                btn.innerHTML = `
-                    <div class="times-badge" id="badge_${index}">0</div>
-                    <span class="val">${item.val}</span>
-                    <span>${item.label}</span>
-                `;
-                grid.appendChild(btn);
+                if (item.type === 'multi') {
+                    btn.className = 'btn-multi';
+                    btn.onclick = () => addMultiError(item);
+                    btn.innerHTML = `
+                        <div class="times-badge" id="badge_${item.id}">0</div>
+                        <span class="val">${item.val}</span>
+                        <span>${item.label}</span>
+                    `;
+                    multiGrid.appendChild(btn);
+                } else {
+                    btn.className = 'btn-single';
+                    btn.id = 'btn_' + item.id;
+                    btn.onclick = () => toggleSingleError(item);
+                    btn.innerHTML = `
+                        <span class="val">${item.val}</span>
+                        <span>${item.label}</span>
+                    `;
+                    singleGrid.appendChild(btn);
+                }
             });
             resetScore();
         }
 
-        function recordDeduction(index, val, label) {
-            // Tăng số lần đếm
-            deductCounts[index] = (deductCounts[index] || 0) + 1;
-            let badge = document.getElementById('badge_' + index);
-            badge.innerText = deductCounts[index];
+        // --- HÀNH ĐỘNG: BẤM NÚT TRỪ NHIỀU LẦN ---
+        function addMultiError(item) {
+            multiCounts[item.id] = (multiCounts[item.id] || 0) + 1;
+            let badge = document.getElementById('badge_' + item.id);
+            badge.innerText = multiCounts[item.id];
             badge.style.display = 'flex';
 
-            // Ghi vào lịch sử để tính tổng và cho phép hoàn tác
-            deductHistory.push({ index: index, val: val, label: label });
+            multiHistory.push(item);
+            calculateScore();
+            document.getElementById('historyDisplay').innerText = `Vừa trừ: ${item.label} (${multiCounts[item.id]} lần)`;
+        }
+
+        // --- HÀNH ĐỘNG: BẬT/TẮT NÚT LỖI 1 LẦN ---
+        function toggleSingleError(item) {
+            let btn = document.getElementById('btn_' + item.id);
+            if (singleStates[item.id]) {
+                // Tắt đi
+                singleStates[item.id] = false;
+                btn.classList.remove('btn-single-active');
+                document.getElementById('historyDisplay').innerText = `Đã bỏ lỗi: ${item.label}`;
+            } else {
+                // Bật lên
+                singleStates[item.id] = true;
+                btn.classList.add('btn-single-active');
+                document.getElementById('historyDisplay').innerText = `Vừa trừ: ${item.label}`;
+            }
             calculateScore();
         }
 
-        function undoLast() {
-            if (deductHistory.length > 0) {
-                let last = deductHistory.pop();
+        // --- HOÀN TÁC (CHỈ ÁP DỤNG CHO NÚT MULTI) ---
+        function undoMulti() {
+            if (multiHistory.length > 0) {
+                let last = multiHistory.pop();
+                multiCounts[last.id]--;
                 
-                // Trừ số lần đếm trên badge
-                deductCounts[last.index]--;
-                let badge = document.getElementById('badge_' + last.index);
-                badge.innerText = deductCounts[last.index];
-                if(deductCounts[last.index] === 0) badge.style.display = 'none';
+                let badge = document.getElementById('badge_' + last.id);
+                badge.innerText = multiCounts[last.id];
+                if(multiCounts[last.id] === 0) badge.style.display = 'none';
 
                 calculateScore();
-            } else { alert("Chưa có lỗi nào để hoàn tác!"); }
-        }
-
-        function calculateScore() {
-            let totalDeduction = deductHistory.reduce((sum, item) => sum + item.val, 0);
-            currentScore = maxScore + totalDeduction;
-            document.getElementById('currentScoreDisplay').innerText = currentScore;
-            
-            let display = document.getElementById('historyDisplay');
-            if (deductHistory.length === 0) display.innerText = "Chưa có lỗi nào";
-            else {
-                let last = deductHistory[deductHistory.length - 1];
-                let count = deductCounts[last.index];
-                display.innerText = `Vừa trừ: ${last.label} (${count} lần)`;
+                document.getElementById('historyDisplay').innerText = `Đã rút lại lỗi: ${last.label}`;
+            } else {
+                alert("Không còn lỗi Kỹ thuật nào để rút lại! (Với lỗi Tổng thể, bạn chỉ cần bấm trực tiếp vào nút đó để tắt)");
             }
         }
 
-        function resetScore() {
-            deductHistory = [];
-            deductCounts = {};
-            calculateScore();
-            document.querySelectorAll('.times-badge').forEach(b => { b.style.display = 'none'; b.innerText = '0'; });
+        // --- TÍNH TỔNG ĐIỂM ---
+        function calculateScore() {
+            let multiDeduction = multiHistory.reduce((sum, item) => sum + item.val, 0);
+            
+            let singleDeduction = 0;
+            currentCriteria.forEach(item => {
+                if (item.type === 'single' && singleStates[item.id]) {
+                    singleDeduction += item.val;
+                }
+            });
+
+            currentScore = maxScore + multiDeduction + singleDeduction;
+            document.getElementById('currentScoreDisplay').innerText = currentScore;
         }
 
+        // --- LÀM MỚI ---
+        function resetScore() {
+            multiHistory = [];
+            multiCounts = {};
+            singleStates = {};
+            calculateScore();
+            document.getElementById('historyDisplay').innerText = "Sẵn sàng chấm điểm";
+            
+            // Tắt hết badge và hiệu ứng
+            document.querySelectorAll('.times-badge').forEach(b => { b.style.display = 'none'; b.innerText = '0'; });
+            document.querySelectorAll('.btn-single').forEach(b => b.classList.remove('btn-single-active'));
+        }
+
+        // --- GỬI ĐIỂM ---
         function submitScore() {
-            let errorDetails = deductHistory.length > 0 
-                ? deductHistory.map(h => `${h.label}(${h.val})`).join(', ') 
-                : "Không có lỗi";
+            // Gom chi tiết lỗi thành 1 chuỗi để nộp
+            let detailArr = [];
+            
+            for (let id in multiCounts) {
+                if (multiCounts[id] > 0) {
+                    let item = currentCriteria.find(i => i.id === id);
+                    detailArr.push(`${item.label} (x${multiCounts[id]})`);
+                }
+            }
+            
+            for (let id in singleStates) {
+                if (singleStates[id]) {
+                    let item = currentCriteria.find(i => i.id === id);
+                    detailArr.push(`${item.label}`);
+                }
+            }
+
+            let errorDetails = detailArr.length > 0 ? detailArr.join(', ') : "Không có lỗi";
 
             if (confirm(`Chốt gửi: ${currentScore} điểm?`)) {
                 socket.emit('submit_score', { judge_id: myJudgeId, score: currentScore, details: errorDetails });
-                document.getElementById('btnSubmit').innerText = "✅ ĐÃ GỬI";
-                document.getElementById('btnSubmit').style.background = "#28a745";
+                let btn = document.getElementById('btnSubmit');
+                btn.innerText = "✅ ĐÃ GỬI";
+                btn.style.background = "#28a745";
+                btn.disabled = true; // Chống gửi nhiều lần
             }
         }
     </script>
