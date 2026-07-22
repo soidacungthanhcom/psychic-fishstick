@@ -75,30 +75,100 @@ def admin_quyen(): return render_template('admin_quyen.html', ip=get_ip_address(
 @requires_auth
 def judge_quyen(): return render_template('judge_quyen.html')
 
+@app.route('/viewer_quyen')
+def viewer_quyen(): return render_template('viewer_quyen.html')
+
 # =========================================================
 # CẦU NỐI GOOGLE SHEET (DÙNG CHUNG)
 # =========================================================
 @app.route('/get_match_list', methods=['GET'])
 def get_match_list():
     try:
-        # Tự động đọc xem Frontend đang xin danh sách gì (Quyền hay Đối kháng)
         req_type = request.args.get('type', 'DOI_KHANG')
-        print(f"--- Đang tải danh sách từ Google Sheet: Loại {req_type} ---")
-        
         response = requests.get(GOOGLE_SCRIPT_URL + f"?type={req_type}")
         return jsonify(response.json())
-    except Exception as e:
-        print(f"❌ LỖI TẢI DANH SÁCH: {str(e)}")
-        return jsonify([])
+    except Exception as e: return jsonify([])
 
 @app.route('/save_to_sheet', methods=['POST'])
 def save_to_sheet():
     try:
         response = requests.post(GOOGLE_SCRIPT_URL, json=request.json)
         return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"status": "error", "msg": str(e)})
+    except Exception as e: return jsonify({"status": "error", "msg": str(e)})
 
+# =========================================================
+# TRUNG TÂM XỬ LÝ SOCKET - ĐỐI KHÁNG
+# =========================================================
+@socketio.on('vote_event')
+def handle_vote(data): emit('server_send_vote', data, broadcast=True)
+@socketio.on('admin_update')
+def handle_admin_update(data): emit('viewer_receive_update', data, broadcast=True)
+@socketio.on('finish_match')
+def handle_finish(data): emit('viewer_finish', data, broadcast=True)
+
+# =========================================================
+# TRUNG TÂM XỬ LÝ SOCKET - QUYỀN
+# =========================================================
+current_quyen_scores = {}
+quyen_config = {'num_judges': 5, 'category': 'DON_LUYEN', 'max_score': 100}
+
+@socketio.on('submit_score')
+def handle_score(data):
+    judge_id = str(data['judge_id'])
+    current_quyen_scores[judge_id] = {'val': float(data['score']), 'details': data.get('details', '')}
+    emit('update_board', calculate_quyen_result(), broadcast=True)
+
+@socketio.on('quyen_admin_sync')
+def handle_quyen_sync(data):
+    quyen_config['category'] = data['category']
+    quyen_config['max_score'] = float(data['maxScore'])
+    current_quyen_scores.clear()
+    # Ép tất cả giám định đổi giao diện
+    emit('quyen_judge_sync', quyen_config, broadcast=True)
+    emit('update_board', calculate_quyen_result(), broadcast=True)
+
+@socketio.on('reset_scores')
+def handle_reset():
+    current_quyen_scores.clear()
+    emit('update_board', calculate_quyen_result(), broadcast=True)
+    emit('quyen_unlock_judges', broadcast=True) # Mở khóa GĐ cho trận mới
+
+@socketio.on('quyen_lock_and_show_tv')
+def handle_show_tv(data):
+    # Khóa màn hình giám định
+    emit('quyen_lock_judges', broadcast=True)
+    # Gửi tín hiệu trình chiếu ra Tivi
+    emit('quyen_tv_animate', data, broadcast=True)
+
+def calculate_quyen_result():
+    num = quyen_config['num_judges']
+    scores_list = []
+    for i in range(1, num + 1):
+        s_id = str(i)
+        data = current_quyen_scores.get(s_id, {'val': 0, 'details': ''})
+        scores_list.append({'id': s_id, 'val': data['val'], 'details': data['details']})
+
+    if len(current_quyen_scores) < num:
+        return {'scores': scores_list, 'total': 'Waiting...', 'dropped': []}
+
+    vals = [s['val'] for s in scores_list]
+    dropped_ids = []
+    total = 0
+
+    max_v, min_v = max(vals), min(vals)
+    found_max = found_min = False
+    for s in scores_list:
+        if s['val'] == max_v and not found_max:
+            found_max = True; dropped_ids.append(s['id'])
+        elif s['val'] == min_v and not found_min:
+            found_min = True; dropped_ids.append(s['id'])
+        else:
+            total += s['val']
+
+    return {'scores': scores_list, 'total': round(total, 2), 'dropped': dropped_ids, 'config': num}
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=5000)
 
 # =========================================================
 # TRUNG TÂM XỬ LÝ SOCKET - ĐỐI KHÁNG
