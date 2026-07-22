@@ -131,7 +131,7 @@ def handle_quyen_sync(data):
 def handle_reset():
     current_quyen_scores.clear()
     emit('update_board', calculate_quyen_result(), broadcast=True)
-    emit('quyen_unlock_judges', broadcast=True) # Mở khóa GĐ cho trận mới
+    emit('quyen_unlock_judges', {'status': 'ok'}, broadcast=True) # Thêm payload để vượt rào bảo mật
 
 @socketio.on('quyen_lock_and_show_tv')
 def handle_show_tv(data):
