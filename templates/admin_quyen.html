@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN CHẤM QUYỀN V6.5</title>
+    <title>ADMIN CHẤM QUYỀN V7.0 (CÓ BẤM GIỜ)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         body { background: #1a1a1a; color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; }
@@ -11,11 +11,18 @@
         .judge-box { background: #111; border: 2px solid #555; border-radius: 10px; width: 180px; padding: 15px; position: relative; }
         .judge-title { color: #00ffcc; font-weight: bold; }
         .judge-score { font-size: 3em; font-weight: bold; color: yellow; }
-        .judge-details { font-size: 0.8em; color: #aaa; font-style: italic; min-height: 35px; border-top: 1px solid #333; margin-top: 10px; padding-top: 5px; }
+        .judge-details { font-size: 0.85em; color: #aaa; font-style: italic; min-height: 45px; border-top: 1px solid #333; margin-top: 10px; padding-top: 5px; }
         .dropped { text-decoration: line-through; color: #ff4d4d !important; opacity: 0.4; }
         .box-dropped { border-color: #ff4d4d; }
-        .total-area { background: #000; padding: 20px; border-radius: 20px; border: 4px solid #0066cc; }
-        .total-score { font-size: 5em; font-weight: bold; color: #fff; }
+        
+        .dashboard { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .total-area { background: #000; padding: 20px; border-radius: 20px; border: 4px solid #0066cc; width: 350px;}
+        .total-score { font-size: 5.5em; font-weight: bold; color: #fff; line-height: 1.2; }
+        
+        /* ĐỒNG HỒ BẤM GIỜ */
+        .stopwatch-area { background: #000; padding: 20px; border-radius: 20px; border: 4px solid #ff9900; width: 350px;}
+        .stopwatch-display { font-size: 5.5em; font-weight: bold; color: yellow; font-family: monospace; line-height: 1.2; }
+        
         button, select, input { padding: 10px 20px; font-size: 1.1em; cursor: pointer; font-weight: bold; border-radius: 5px; border: none; }
     </style>
 </head>
@@ -31,8 +38,8 @@
     </div>
 
     <!-- CỤM ĐIỀU KHIỂN CỦA ADMIN -->
-    <div class="control-bar" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-        <select id="catSelect" onchange="syncToJudges()" style="background: #333; color: white;">
+    <div class="control-bar">
+        <select id="catSelect" onchange="syncToJudges()" style="background: #444; color: white;">
             <option value="DON_LUYEN">Đơn Luyện</option>
             <option value="SONG_LUYEN">Song Luyện</option>
             <option value="DONG_DOI">Đồng Đội</option>
@@ -40,9 +47,9 @@
             <option value="TU_VE_NU">Tự Vệ Nữ</option>
         </select>
         
-        <div style="display: flex; align-items: center; gap: 5px; background: #333; padding: 5px 15px; border-radius: 5px;">
+        <div style="display: flex; align-items: center; gap: 5px; background: #333; padding: 5px 15px; border-radius: 5px; border: 1px solid #555;">
             <span style="font-weight: bold; color: #aaa;">Điểm Chuẩn:</span>
-            <input type="number" id="adminMaxScore" value="100" onchange="syncToJudges()" style="width: 70px; text-align: center; font-weight: bold; padding: 5px; border-radius: 5px;">
+            <input type="number" id="adminMaxScore" value="100" onchange="syncToJudges()" style="width: 70px; text-align: center; font-weight: bold; padding: 5px; border-radius: 5px; background: #222; color: white;">
         </div>
         
         <button onclick="resetScores()" style="background: #cc0000; color: white;">🔄 MỞ TRẬN MỚI (Mở khóa GĐ)</button>
@@ -52,11 +59,24 @@
         <button onclick="lockAndShowTV()" style="background: #ff00ff; color: white; border: 2px solid white; box-shadow: 0 0 10px #ff00ff;">📺 CHỐT & CHIẾU TIVI</button>
     </div>
 
+    <!-- KHU VỰC 5 GIÁM ĐỊNH -->
     <div class="scores-container" id="scoresBoard"></div>
 
-    <div class="total-area">
-        <div style="color: #0066cc; font-weight: bold;">TỔNG ĐIỂM CUỐI CÙNG</div>
-        <div class="total-score" id="totalScore">0.00</div>
+    <!-- KHU VỰC ĐỒNG HỒ VÀ TỔNG ĐIỂM -->
+    <div class="dashboard">
+        <div class="stopwatch-area">
+            <div style="color: #ff9900; font-weight: bold; font-size: 1.2em;">⏱ THỜI GIAN BÀI THI</div>
+            <div class="stopwatch-display" id="stopwatchDisplay">00:00.00</div>
+            <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
+                <button id="btnStartTimer" onclick="toggleStopwatch()" style="background: #28a745; color: white; width: 140px;">▶ BẮT ĐẦU</button>
+                <button onclick="resetStopwatch()" style="background: #555; color: white;">🔄 ĐẶT LẠI</button>
+            </div>
+        </div>
+
+        <div class="total-area">
+            <div style="color: #0066cc; font-weight: bold; font-size: 1.2em;">TỔNG ĐIỂM CUỐI CÙNG</div>
+            <div class="total-score" id="totalScore">0.00</div>
+        </div>
     </div>
 
     <script>
@@ -64,12 +84,64 @@
         var lastData = null;
         var currentAthlete = {}; 
 
-        // --- 1. TẢI DANH SÁCH TỪ GOOGLE SHEET ---
+        // ==========================================
+        // MÔ-ĐUN ĐỒNG HỒ BẤM GIỜ THỂ THAO
+        // ==========================================
+        let swInterval;
+        let swStartTime;
+        let swElapsedTime = 0;
+        let swIsRunning = false;
+
+        function toggleStopwatch() {
+            let btn = document.getElementById('btnStartTimer');
+            if(swIsRunning) {
+                // Tạm dừng
+                clearInterval(swInterval);
+                swIsRunning = false;
+                btn.innerText = "▶ TIẾP TỤC";
+                btn.style.background = "#28a745";
+            } else {
+                // Bắt đầu chạy
+                swStartTime = Date.now() - swElapsedTime;
+                swInterval = setInterval(updateStopwatch, 10);
+                swIsRunning = true;
+                btn.innerText = "⏸ DỪNG LẠI";
+                btn.style.background = "#cc0000";
+            }
+        }
+
+        function updateStopwatch() {
+            swElapsedTime = Date.now() - swStartTime;
+            let totalMs = swElapsedTime;
+            
+            // Tính toán Phút : Giây . Phần trăm giây
+            let ms = Math.floor((totalMs % 1000) / 10); // Lấy 2 chữ số (1/100 giây)
+            let s = Math.floor((totalMs / 1000) % 60);
+            let m = Math.floor(totalMs / 60000);
+            
+            let mStr = m.toString().padStart(2, '0');
+            let sStr = s.toString().padStart(2, '0');
+            let msStr = ms.toString().padStart(2, '0');
+            
+            document.getElementById('stopwatchDisplay').innerText = `${mStr}:${sStr}.${msStr}`;
+        }
+
+        function resetStopwatch() {
+            clearInterval(swInterval);
+            swIsRunning = false;
+            swElapsedTime = 0;
+            document.getElementById('stopwatchDisplay').innerText = "00:00.00";
+            let btn = document.getElementById('btnStartTimer');
+            btn.innerText = "▶ BẮT ĐẦU";
+            btn.style.background = "#28a745";
+        }
+
+        // ==========================================
+        // KẾT NỐI SERVER & QUẢN LÝ ĐIỂM SỐ
+        // ==========================================
         function loadList() {
             let btn = document.querySelector("button[onclick='loadList()']");
             let oldText = btn.innerText; btn.innerText = "⏳...";
-            
-            // Gọi đúng loại QUYEN
             fetch('/get_match_list?type=QUYEN').then(r => r.json()).then(data => {
                 btn.innerText = oldText;
                 let sel = document.getElementById('athleteSelect');
@@ -79,29 +151,21 @@
                 });
                 alert(`Đã tải thành công ${data.length} VĐV thi Quyền!`);
             }).catch(e => {
-                btn.innerText = oldText;
-                alert("Lỗi kết nối hoặc chưa có dữ liệu trong Sheet DS_Quyen!");
+                btn.innerText = oldText; alert("Lỗi kết nối hoặc chưa có dữ liệu trong Sheet DS_Quyen!");
             });
         }
 
-        // --- 2. XỬ LÝ KHI CHỌN VĐV ---
         document.getElementById('athleteSelect').addEventListener('change', function() {
             if(this.value) {
                 currentAthlete = JSON.parse(this.value);
                 document.getElementById('athleteInfo').innerText = `Đang thi: ${currentAthlete.name} | ${currentAthlete.category}`;
             } else {
-                currentAthlete = {};
-                document.getElementById('athleteInfo').innerText = "";
+                currentAthlete = {}; document.getElementById('athleteInfo').innerText = "";
             }
         });
 
-        // --- 3. XỬ LÝ ĐIỂM SỐ TỪ SERVER TRẢ VỀ ---
         socket.on('update_board', function(data) {
             lastData = data;
-            renderBoard(data);
-        });
-
-        function renderBoard(data) {
             let container = document.getElementById('scoresBoard');
             container.innerHTML = '';
             data.scores.forEach(s => {
@@ -115,46 +179,40 @@
                 `;
             });
             document.getElementById('totalScore').innerText = data.total;
-        }
+        });
 
-        // --- 4. LƯU KẾT QUẢ VÀO GOOGLE SHEET ---
         function saveResult() {
-            if(!currentAthlete.id) {
-                alert("⚠️ Khoan đã! Bạn phải chọn Vận động viên ở danh sách thả xuống trước khi lưu!");
-                return;
-            }
-            if(!lastData || lastData.total === "Waiting...") {
-                alert("⚠️ Giám định chưa chấm xong 5 người, chưa thể lưu!"); return;
-            }
+            if(!currentAthlete.id) { alert("⚠️ Khoan đã! Bạn phải chọn Vận động viên ở danh sách thả xuống trước khi lưu!"); return; }
+            if(!lastData || lastData.total === "Waiting...") { alert("⚠️ Giám định chưa chấm xong 5 người, chưa thể lưu!"); return; }
+            
+            // Ép dừng đồng hồ nếu đang chạy
+            if(swIsRunning) toggleStopwatch();
+            
+            // Lấy thời gian thi đấu để kẹp chung vào chi tiết lỗi
+            let timeString = document.getElementById('stopwatchDisplay').innerText;
+            let finalDetails = `[Thời gian bài thi: ${timeString}] || ` + lastData.scores.map(s => `GĐ${s.id}: ${s.val} (${s.details})`).join(" || ");
 
-            if(confirm(`Bạn có chắc chắn lưu [ ${lastData.total} điểm ] cho VĐV [ ${currentAthlete.name} ]?`)) {
+            if(confirm(`Bạn có chắc chắn lưu [ ${lastData.total} điểm ] và Thời gian [ ${timeString} ] cho VĐV [ ${currentAthlete.name} ]?`)) {
                 fetch('/save_to_sheet', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        type: 'QUYEN',
-                        matchId: currentAthlete.id,
-                        name: currentAthlete.name,
-                        total: lastData.total,
-                        details: lastData.scores.map(s => `GĐ${s.id}: ${s.val} (${s.details})`).join(" || ")
+                        type: 'QUYEN', matchId: currentAthlete.id, name: currentAthlete.name,
+                        total: lastData.total, details: finalDetails
                     })
                 }).then(r => r.json()).then(d => {
-                    if(d.status === 'success' || d.result === 'success') {
-                        alert("✅ Đã lưu thành công vào tab KQ_Quyen!");
-                    } else {
-                        alert("❌ Có lỗi xảy ra khi lưu!");
-                    }
+                    if(d.status === 'success' || d.result === 'success') alert("✅ Đã lưu thành công vào tab KQ_Quyen!");
+                    else alert("❌ Có lỗi xảy ra khi lưu!");
                 }).catch(e => alert("❌ Lỗi mạng hoặc server!"));
             }
         }
 
         function resetScores() { 
-            if(confirm("Mở trận mới? Hệ thống sẽ xóa điểm hiện tại và MỞ KHÓA lại màn hình cho 5 Giám định!")) {
+            if(confirm("Mở trận mới? Hệ thống sẽ XÓA ĐIỂM CŨ, MỞ KHÓA lại màn hình cho 5 Giám định và RESET Đồng hồ!")) {
                 socket.emit('reset_scores'); 
+                resetStopwatch();
             }
         }
 
-        // --- QUYỀN LỰC CỦA ADMIN: Ép các giám định đổi theo cài đặt ---
         function syncToJudges() {
             let cat = document.getElementById('catSelect').value;
             let max = document.getElementById('adminMaxScore').value;
@@ -162,21 +220,16 @@
             alert(`Đã ép các Giám định chuyển sang: ${cat} (Điểm chuẩn: ${max})`);
         }
 
-        // --- QUYỀN LỰC CỦA ADMIN: Khóa giám định và chiếu điểm lên Tivi ---
         function lockAndShowTV() {
-            if(!lastData || lastData.total === "Waiting...") {
-                alert("⚠️ Giám định chưa chấm xong 5 người, chưa thể chiếu Tivi!"); return;
-            }
+            if(!lastData || lastData.total === "Waiting...") { alert("⚠️ Giám định chưa chấm xong 5 người, chưa thể chiếu Tivi!"); return; }
+            
+            // Tự động dừng đồng hồ nếu Admin quên bấm
+            if(swIsRunning) toggleStopwatch();
+            
             let athleteName = currentAthlete.name ? currentAthlete.name : "VẬN ĐỘNG VIÊN";
             let athleteUnit = currentAthlete.unit ? currentAthlete.unit : "---";
             
-            // Gửi toàn bộ dữ liệu (Điểm, tổng, người bị loại) sang Tivi
-            socket.emit('quyen_lock_and_show_tv', {
-                name: athleteName,
-                unit: athleteUnit,
-                result: lastData
-            });
-            
+            socket.emit('quyen_lock_and_show_tv', { name: athleteName, unit: athleteUnit, result: lastData });
             alert("📺 Đã chốt điểm, khóa Giám định và trình chiếu lên TIVI thành công!");
         }
     </script>
