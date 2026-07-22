@@ -6,242 +6,204 @@
     <title>Giám Định Chấm Quyền Vovinam</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
-        :root {
-            --bg-color: #121212; --panel-bg: #1e1e1e; --text-main: #ffffff;
-            --accent-color: #00ffcc; --danger-color: #ff4d4d; --warning-color: #ff9900;
-        }
-        body { 
-            background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Tahoma, sans-serif; 
-            margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; 
-        }
+        :root { --bg-color: #121212; --text-main: #ffffff; --accent-color: #00ffcc; --danger-color: #ff4d4d; --warning-color: #ff9900; }
+        body { background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
         
-        /* HEADER: Cài đặt ban đầu */
-        .config-panel { background: var(--panel-bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
-        .row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .row:last-child { margin-bottom: 0; }
-        .input-group { flex: 1; display: flex; flex-direction: column; }
-        label { font-size: 0.8rem; color: #aaa; margin-bottom: 3px; font-weight: bold; }
-        select, input { 
-            padding: 10px; font-size: 1rem; border-radius: 5px; border: 1px solid #555; 
-            background: #2a2a2a; color: #fff; font-weight: bold; width: 100%; box-sizing: border-box;
-        }
+        /* MÀN HÌNH CHÀO HỎI (LOGIN) */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #loginOverlay h2 { color: #ffcc00; margin-bottom: 30px; font-size: 1.5rem; text-align: center; text-transform: uppercase;}
+        .login-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 80%; max-width: 400px; }
+        .login-btn { background: #333; color: white; border: 2px solid #555; padding: 20px; font-size: 1.5rem; font-weight: bold; border-radius: 10px; cursor: pointer; }
+        .login-btn:active { background: #00ffcc; color: black; }
         
-        /* BẢNG ĐIỂM */
-        .score-board { text-align: center; margin: 10px 0; }
-        .score-value { font-size: 4.5rem; font-weight: 900; color: var(--accent-color); line-height: 1; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
-        .history-text { font-size: 0.85rem; color: #888; height: 20px; margin-top: 5px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* MÀN HÌNH CHÍNH */
+        #mainApp { display: none; flex-direction: column; height: 100%; }
+        .header-info { display: flex; justify-content: space-between; background: #1e1e1e; padding: 10px 15px; border-radius: 8px; border: 1px solid #333; align-items: center;}
+        .judge-name { font-size: 1.2rem; font-weight: 900; color: #ffcc00; }
+        .cat-name { font-size: 0.9rem; color: #aaa; font-weight: bold;}
+        
+        .score-board { text-align: center; margin: 15px 0; }
+        .score-value { font-size: 5rem; font-weight: 900; color: var(--accent-color); line-height: 1; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
+        .history-text { font-size: 0.9rem; color: #888; height: 20px; margin-top: 5px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* KHU VỰC NÚT TRỪ ĐIỂM (Tự động cuộn, không bị che) */
-        .btn-grid { 
-            flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; padding-bottom: 80px; align-content: start;
-        }
-        .deduct-btn { 
-            background: #2b1111; border: 1px solid #8b0000; color: #ff8080; 
-            padding: 15px 5px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; 
-            cursor: pointer; text-align: center; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; min-height: 70px;
-        }
+        /* DANH SÁCH NÚT LỖI CÓ SỐ LẦN (BADGE) */
+        .btn-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding-bottom: 80px; align-content: start; }
+        .deduct-btn { position: relative; background: #2b1111; border: 1px solid #8b0000; color: #ff8080; padding: 15px 5px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70px; }
         .deduct-btn:active { background: var(--danger-color); color: #fff; }
-        .deduct-btn .val { font-size: 1.3rem; margin-bottom: 3px; color: var(--danger-color); }
-        
-        /* THANH ĐIỀU KHIỂN CỐ ĐỊNH BÊN DƯỚI */
-        .bottom-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; 
-            padding: 12px; display: flex; gap: 12px; border-top: 1px solid #333; z-index: 10; 
-        }
-        .action-btn { 
-            flex: 1; padding: 15px; font-size: 1.1rem; font-weight: bold; 
-            border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; 
-        }
+        .deduct-btn .val { font-size: 1.4rem; margin-bottom: 3px; color: var(--danger-color); }
+        .times-badge { position: absolute; top: -5px; right: -5px; background: red; color: white; width: 25px; height: 25px; border-radius: 50%; font-size: 0.9rem; font-weight: bold; display: none; align-items: center; justify-content: center; box-shadow: 0 0 5px black; border: 2px solid #fff;}
+
+        /* THANH ĐIỀU KHIỂN & MÀN HÌNH KHÓA */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; padding: 12px; display: flex; gap: 12px; border-top: 1px solid #333; z-index: 10; }
+        .action-btn { flex: 1; padding: 15px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; }
         .btn-undo { background: var(--warning-color); color: #000; flex: 0.8; }
         .btn-submit { background: #0066cc; color: #fff; flex: 1.2; }
+        
+        #lockOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #lockOverlay h1 { color: #ffcc00; font-size: 2rem; text-align: center;}
     </style>
 </head>
 <body>
 
-    <!-- CẤU HÌNH -->
-    <div class="config-panel">
-        <div class="row">
-            <div class="input-group">
-                <label>VỊ TRÍ GIÁM ĐỊNH</label>
-                <select id="judgeId">
-                    <option value="1">Giám định 1</option><option value="2">Giám định 2</option>
-                    <option value="3">Giám định 3</option><option value="4">Giám định 4</option>
-                    <option value="5">Giám định 5</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>ĐIỂM CHUẨN (MAX)</label>
-                <input type="number" id="maxScore" value="100" onchange="calculateScore()">
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-group">
-                <label>NỘI DUNG THI ĐẤU</label>
-                <select id="categorySelect" onchange="loadButtons()">
-                    <option value="DON_LUYEN">Đơn Luyện</option>
-                    <option value="SONG_LUYEN">Song Luyện</option>
-                    <option value="DONG_DOI">Đồng Đội</option>
-                    <option value="DA_LUYEN">Đa Luyện</option>
-                    <option value="TU_VE_NU">Tự Vệ Nữ</option>
-                </select>
-            </div>
+    <!-- MÀN HÌNH KHAI BÁO GIÁM ĐỊNH -->
+    <div id="loginOverlay">
+        <h2>XÁC NHẬN VỊ TRÍ CỦA BẠN</h2>
+        <div class="login-grid">
+            <button class="login-btn" onclick="loginJudge(1)">G.Định 1</button>
+            <button class="login-btn" onclick="loginJudge(2)">G.Định 2</button>
+            <button class="login-btn" onclick="loginJudge(3)">G.Định 3</button>
+            <button class="login-btn" onclick="loginJudge(4)">G.Định 4</button>
+            <button class="login-btn" onclick="loginJudge(5)" style="grid-column: span 2;">G.Định 5</button>
         </div>
     </div>
 
-    <!-- MÀN HÌNH ĐIỂM SỐ -->
-    <div class="score-board">
-        <div class="score-value" id="currentScoreDisplay">100</div>
-        <div class="history-text" id="historyDisplay">Chưa có lỗi nào</div>
+    <!-- MÀN HÌNH KHÓA (KHI ADMIN CHỐT ĐIỂM) -->
+    <div id="lockOverlay">
+        <h1>🔒 ĐÃ CHỐT ĐIỂM</h1>
+        <p style="color: #aaa;">Vui lòng chờ Admin mở trận mới</p>
     </div>
 
-    <!-- DANH SÁCH NÚT LỖI -->
-    <div class="btn-grid" id="buttonGrid"></div>
+    <!-- MÀN HÌNH CHÍNH -->
+    <div id="mainApp">
+        <div class="header-info">
+            <div class="judge-name" id="myJudgeName">GĐ X</div>
+            <div class="cat-name" id="currentCategory">Đơn Luyện (Max 100)</div>
+        </div>
 
-    <!-- THANH THAO TÁC CỐ ĐỊNH -->
-    <div class="bottom-bar">
-        <button class="action-btn btn-undo" onclick="undoLast()">⏪ H.Tác</button>
-        <button class="action-btn btn-submit" onclick="submitScore()">🚀 GỬI ĐIỂM</button>
+        <div class="score-board">
+            <div class="score-value" id="currentScoreDisplay">100</div>
+            <div class="history-text" id="historyDisplay">Chưa có lỗi nào</div>
+        </div>
+
+        <div class="btn-grid" id="buttonGrid"></div>
+
+        <div class="bottom-bar">
+            <button class="action-btn btn-undo" onclick="undoLast()">⏪ H.Tác</button>
+            <button class="action-btn btn-submit" id="btnSubmit" onclick="submitScore()">🚀 GỬI ĐIỂM</button>
+        </div>
     </div>
 
     <script>
         var socket = io();
+        let myJudgeId = 0;
         let currentScore = 100;
+        let maxScore = 100;
         let deductHistory = [];
+        let deductCounts = {}; // Lưu số lần bấm của mỗi lỗi
 
-        // DỮ LIỆU TIÊU CHÍ CHẤM ĐIỂM DỰA TRÊN PHIẾU CHUẨN
         const criteriaData = {
-            'DON_LUYEN': [
-                { val: -1, label: 'Sai động tác' }, { val: -2, label: 'Kết thúc sai vị trí' },
-                { val: -2, label: 'Ngập ngừng' }, { val: -5, label: 'Bỏ đ.tác / Sai nặng' },
-                { val: -2, label: 'Vũ khí chạm nhẹ' }, { val: -5, label: 'Vũ khí chạm nặng' },
-                { val: -2, label: 'Quyền, cước chậm' }, { val: -2, label: 'Thiếu uy lực' },
-                { val: -2, label: 'Biểu lộ mệt mỏi' }, { val: -2, label: 'Quá thời gian' },
-                { val: -1, label: 'Tấn sai kỹ thuật' }, { val: -2, label: 'Mất thăng bằng' },
-                { val: -2, label: 'Thiếu uyển chuyển' }, { val: -1, label: 'Thiếu ấn tượng' }
-            ],
-            'SONG_LUYEN': [
-                { val: -1, label: 'Sai động tác' }, { val: -2, label: 'Ngập ngừng' },
-                { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Vũ khí chạm nhẹ' },
-                { val: -5, label: 'Vũ khí chạm nặng' }, { val: -2, label: 'Xiết/Phản đòn ko rõ' },
-                { val: -2, label: 'Ngã không an toàn' }, { val: -1, label: 'Ra khỏi vạch' },
-                { val: -1, label: 'Thiếu nhịp nhàng' }, { val: -2, label: 'Quyền, cước chậm' },
-                { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' },
-                { val: -2, label: 'Chậm 5s quy định' }, { val: -1, label: 'Thiếu ấn tượng' }
-            ],
-            'DONG_DOI': [
-                { val: -1, label: 'Sai động tác' }, { val: -2, label: 'Kết thúc sai vị trí' },
-                { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Quyền, cước chậm' },
-                { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' },
-                { val: -1, label: 'Tấn sai kỹ thuật' }, { val: -2, label: 'Mất thăng bằng' },
-                { val: -2, label: 'Không đồng đều' }, { val: -1, label: 'Thiếu ấn tượng' }
-            ],
-            'DA_LUYEN': [
-                { val: -2, label: 'Cấu trúc/Tấn công ko rõ' }, { val: -2, label: 'Không liên tục' },
-                { val: -2, label: 'Ngập ngừng' }, { val: -10, label: 'Chấn thương/Quên bài' },
-                { val: -3, label: 'Thiếu 1 đòn cơ bản' }, { val: -2, label: 'Phản đòn chậm yếu' },
-                { val: -2, label: 'Phối hợp không tốt' }, { val: -2, label: 'Thể lực không tốt' },
-                { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' },
-                { val: -1, label: 'Ra khỏi vạch' }, { val: -2, label: 'Không nhịp nhàng' },
-                { val: -2, label: 'Thiếu ấn tượng' }
-            ],
-            'TU_VE_NU': [
-                { val: -2, label: 'Cấu trúc/Tấn công ko rõ' }, { val: -2, label: 'Không liên tục' },
-                { val: -2, label: 'Ngập ngừng' }, { val: -2, label: 'Diễu cợt/Ko nghiêm túc' },
-                { val: -3, label: 'Thiếu 1 đòn cơ bản' }, { val: -2, label: 'Thiếu dứt khoát' },
-                { val: -2, label: 'Phối hợp/Tránh né chậm' }, { val: -2, label: 'Thể lực không tốt' },
-                { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' },
-                { val: -1, label: 'Ra khỏi vạch' }, { val: -2, label: 'Không nhịp nhàng' },
-                { val: -2, label: 'Thiếu ấn tượng' }
-            ]
+            'DON_LUYEN': [{ val: -1, label: 'Sai động tác' }, { val: -2, label: 'Kết thúc sai vị trí' }, { val: -2, label: 'Ngập ngừng' }, { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Vũ khí chạm nhẹ' }, { val: -5, label: 'Vũ khí chạm nặng' }, { val: -2, label: 'Quyền, cước chậm' }, { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' }, { val: -2, label: 'Quá thời gian' }, { val: -1, label: 'Tấn sai kỹ thuật' }, { val: -2, label: 'Mất thăng bằng' }, { val: -2, label: 'Thiếu uyển chuyển' }, { val: -1, label: 'Thiếu ấn tượng' }],
+            'SONG_LUYEN': [{ val: -1, label: 'Sai động tác' }, { val: -2, label: 'Ngập ngừng' }, { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Vũ khí chạm nhẹ' }, { val: -5, label: 'Vũ khí chạm nặng' }, { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' }, { val: -1, label: 'Ra khỏi vạch' }, { val: -1, label: 'Thiếu nhịp nhàng' }, { val: -2, label: 'Quyền, cước chậm' }, { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' }, { val: -2, label: 'Chậm 5s quy định' }, { val: -1, label: 'Thiếu ấn tượng' }],
+            'DONG_DOI': [{ val: -1, label: 'Sai động tác' }, { val: -2, label: 'Kết thúc sai vị trí' }, { val: -5, label: 'Bỏ đ.tác / Sai nặng' }, { val: -2, label: 'Quyền, cước chậm' }, { val: -2, label: 'Thiếu uy lực' }, { val: -2, label: 'Biểu lộ mệt mỏi' }, { val: -1, label: 'Tấn sai kỹ thuật' }, { val: -2, label: 'Mất thăng bằng' }, { val: -2, label: 'Không đồng đều' }, { val: -1, label: 'Thiếu ấn tượng' }],
+            'DA_LUYEN': [{ val: -2, label: 'Cấu trúc/Tấn công ko rõ' }, { val: -2, label: 'Không liên tục' }, { val: -2, label: 'Ngập ngừng' }, { val: -10, label: 'Chấn thương/Quên bài' }, { val: -3, label: 'Thiếu 1 đòn cơ bản' }, { val: -2, label: 'Phản đòn chậm yếu' }, { val: -2, label: 'Phối hợp không tốt' }, { val: -2, label: 'Thể lực không tốt' }, { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' }, { val: -1, label: 'Ra khỏi vạch' }, { val: -2, label: 'Không nhịp nhàng' }, { val: -2, label: 'Thiếu ấn tượng' }],
+            'TU_VE_NU': [{ val: -2, label: 'Cấu trúc/Tấn công ko rõ' }, { val: -2, label: 'Không liên tục' }, { val: -2, label: 'Ngập ngừng' }, { val: -2, label: 'Diễu cợt/Ko nghiêm túc' }, { val: -3, label: 'Thiếu 1 đòn cơ bản' }, { val: -2, label: 'Thiếu dứt khoát' }, { val: -2, label: 'Phối hợp/Tránh né chậm' }, { val: -2, label: 'Thể lực không tốt' }, { val: -2, label: 'Xiết/Phản đòn ko rõ' }, { val: -2, label: 'Ngã không an toàn' }, { val: -1, label: 'Ra khỏi vạch' }, { val: -2, label: 'Không nhịp nhàng' }, { val: -2, label: 'Thiếu ấn tượng' }]
         };
 
-        // LOAD NÚT THEO NỘI DUNG THI ĐẤU
-        function loadButtons() {
-            const cat = document.getElementById('categorySelect').value;
+        function loginJudge(id) {
+            myJudgeId = id;
+            document.getElementById('myJudgeName').innerText = "GIÁM ĐỊNH " + id;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            loadButtons('DON_LUYEN'); // Mặc định tải Đơn luyện lúc mới vào
+        }
+
+        // LẮNG NGHE LỆNH TỪ ADMIN (Thay đổi hạng mục & Mở/Khóa trận)
+        socket.on('quyen_judge_sync', function(config) {
+            maxScore = config.max_score;
+            document.getElementById('currentCategory').innerText = `${config.category} (Max ${maxScore})`;
+            loadButtons(config.category);
+        });
+
+        socket.on('quyen_lock_judges', function() {
+            document.getElementById('lockOverlay').style.display = 'flex';
+        });
+
+        socket.on('quyen_unlock_judges', function() {
+            document.getElementById('lockOverlay').style.display = 'none';
+            resetScore();
+            document.getElementById('btnSubmit').innerText = "🚀 GỬI ĐIỂM";
+            document.getElementById('btnSubmit').style.background = "#0066cc";
+        });
+
+        // TẠO GIAO DIỆN NÚT VÀ CƠ CHẾ ĐẾM
+        function loadButtons(cat) {
             const grid = document.getElementById('buttonGrid');
             grid.innerHTML = '';
             
-            criteriaData[cat].forEach(item => {
+            criteriaData[cat].forEach((item, index) => {
                 let btn = document.createElement('div');
                 btn.className = 'deduct-btn';
-                btn.onclick = () => recordDeduction(item.val, item.label);
-                btn.innerHTML = `<span class="val">${item.val}</span><span>${item.label}</span>`;
+                btn.onclick = () => recordDeduction(index, item.val, item.label);
+                
+                // Thêm một cái Badge ẩn ở góc nút
+                btn.innerHTML = `
+                    <div class="times-badge" id="badge_${index}">0</div>
+                    <span class="val">${item.val}</span>
+                    <span>${item.label}</span>
+                `;
                 grid.appendChild(btn);
             });
-            
-            // Đổi hạng mục thì reset điểm
             resetScore();
         }
 
-        // XỬ LÝ TRỪ ĐIỂM
-        function recordDeduction(value, label) {
-            deductHistory.push({ val: value, label: label });
+        function recordDeduction(index, val, label) {
+            // Tăng số lần đếm
+            deductCounts[index] = (deductCounts[index] || 0) + 1;
+            let badge = document.getElementById('badge_' + index);
+            badge.innerText = deductCounts[index];
+            badge.style.display = 'flex';
+
+            // Ghi vào lịch sử để tính tổng và cho phép hoàn tác
+            deductHistory.push({ index: index, val: val, label: label });
             calculateScore();
         }
 
-        // TÍNH TOÁN LẠI ĐIỂM DỰA TRÊN LỊCH SỬ (Hỗ trợ đổi điểm Max)
+        function undoLast() {
+            if (deductHistory.length > 0) {
+                let last = deductHistory.pop();
+                
+                // Trừ số lần đếm trên badge
+                deductCounts[last.index]--;
+                let badge = document.getElementById('badge_' + last.index);
+                badge.innerText = deductCounts[last.index];
+                if(deductCounts[last.index] === 0) badge.style.display = 'none';
+
+                calculateScore();
+            } else { alert("Chưa có lỗi nào để hoàn tác!"); }
+        }
+
         function calculateScore() {
-            let maxScore = parseFloat(document.getElementById('maxScore').value) || 100;
             let totalDeduction = deductHistory.reduce((sum, item) => sum + item.val, 0);
-            
             currentScore = maxScore + totalDeduction;
             document.getElementById('currentScoreDisplay').innerText = currentScore;
             
-            updateHistoryText();
-        }
-
-        // CẬP NHẬT HIỂN THỊ DÒNG LỊCH SỬ
-        function updateHistoryText() {
             let display = document.getElementById('historyDisplay');
-            if (deductHistory.length === 0) {
-                display.innerText = "Chưa có lỗi nào";
-            } else {
+            if (deductHistory.length === 0) display.innerText = "Chưa có lỗi nào";
+            else {
                 let last = deductHistory[deductHistory.length - 1];
-                display.innerText = `Lỗi vừa bấm: ${last.label} (${last.val})`;
+                let count = deductCounts[last.index];
+                display.innerText = `Vừa trừ: ${last.label} (${count} lần)`;
             }
         }
 
-        // HOÀN TÁC (LẤY LỖI CUỐI CÙNG RA KHỎI DANH SÁCH)
-        function undoLast() {
-            if (deductHistory.length > 0) {
-                deductHistory.pop();
-                calculateScore();
-            } else {
-                alert("Không có thao tác nào để hoàn tác!");
-            }
-        }
-
-        // XÓA TRẮNG ĐỂ CHẤM VĐV MỚI
         function resetScore() {
             deductHistory = [];
+            deductCounts = {};
             calculateScore();
+            document.querySelectorAll('.times-badge').forEach(b => { b.style.display = 'none'; b.innerText = '0'; });
         }
 
-        // GỬI KẾT QUẢ LÊN SERVER
         function submitScore() {
-            let jId = document.getElementById('judgeId').value;
-            
-            // Gom các lỗi thành chuỗi chi tiết để thư ký/admin xem
             let errorDetails = deductHistory.length > 0 
                 ? deductHistory.map(h => `${h.label}(${h.val})`).join(', ') 
                 : "Không có lỗi";
 
-            if (confirm(`Giám định ${jId} chốt điểm: ${currentScore}?\nChi tiết: ${errorDetails}`)) {
-                socket.emit('submit_score', {
-                    judge_id: jId,
-                    score: currentScore,
-                    details: errorDetails
-                });
-                
-                alert(`Đã gửi điểm ${currentScore} thành công!`);
-                resetScore();
+            if (confirm(`Chốt gửi: ${currentScore} điểm?`)) {
+                socket.emit('submit_score', { judge_id: myJudgeId, score: currentScore, details: errorDetails });
+                document.getElementById('btnSubmit').innerText = "✅ ĐÃ GỬI";
+                document.getElementById('btnSubmit').style.background = "#28a745";
             }
         }
-
-        // Khởi tạo ban đầu
-        window.onload = loadButtons;
     </script>
 </body>
 </html>
