@@ -35,7 +35,7 @@
         
         .show-total { opacity: 1; transform: translateY(0); }
 
-        .waiting-text { font-size: 5vh; color: #555; font-style: italic; animation: blink 2s infinite; }
+        .waiting-text { font-size: 5vh; color: #555; font-style: italic; animation: blink 2s infinite; text-align: center; }
         @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
@@ -60,21 +60,33 @@
     <script>
         var socket = io();
 
-        // KHI ADMIN BẤM "CHỐT & TRÌNH CHIẾU TIVI"
+        // 1. NHẬN LỆNH TỪ ADMIN: CHUẨN BỊ CHO VĐV MỚI
+        socket.on('viewer_receive_update', function(data) {
+            if (data.type === 'quyen_standby') {
+                document.getElementById('tvName').innerText = data.name;
+                document.getElementById('tvUnit').innerText = data.unit;
+                
+                // Dọn sạch bảng điểm cũ, đưa về trạng thái chờ
+                document.getElementById('tvJudges').innerHTML = '<div class="waiting-text">VẬN ĐỘNG VIÊN ĐANG THỰC HIỆN BÀI THI...</div>';
+                document.getElementById('tvTotalBox').classList.remove('show-total');
+            }
+        });
+
+        // 2. NHẬN LỆNH TỪ ADMIN: CHỐT ĐIỂM VÀ TRÌNH CHIẾU
         socket.on('quyen_tv_animate', function(data) {
+            // Đề phòng trường hợp Tivi mở sau, ta vẫn cập nhật lại tên 1 lần nữa
             document.getElementById('tvName').innerText = data.name;
             document.getElementById('tvUnit').innerText = data.unit;
             
             let container = document.getElementById('tvJudges');
             let totalBox = document.getElementById('tvTotalBox');
             
-            // Ẩn tổng điểm đi để làm hiệu ứng
             totalBox.classList.remove('show-total');
-            container.innerHTML = ''; // Xóa chữ Waiting
+            container.innerHTML = ''; 
             
             let result = data.result;
 
-            // BƯỚC 1: Hiện bảng điểm 5 Giám định lên (màu trắng, chưa loại ai)
+            // HIỆN BẢNG ĐIỂM CỦA 5 GIÁM ĐỊNH (CHƯA LOẠI)
             result.scores.forEach(s => {
                 let box = document.createElement('div');
                 box.className = 'judge-box';
@@ -83,18 +95,15 @@
                 container.appendChild(box);
             });
 
-            // BƯỚC 2: Hiệu ứng sau 1.5 giây (Làm mờ Cao/Thấp, Sáng 3 điểm giữ lại)
+            // LÀM MỜ VÀ BẬT SÁNG ĐIỂM
             setTimeout(() => {
                 result.scores.forEach(s => {
                     let box = document.getElementById('tv_j_' + s.id);
-                    if(result.dropped.includes(s.id)) {
-                        box.classList.add('dimmed'); // Làm mờ Cao nhất, Thấp nhất
-                    } else {
-                        box.classList.add('highlighted'); // Làm rực sáng 3 điểm giữ lại
-                    }
+                    if(result.dropped.includes(s.id)) box.classList.add('dimmed'); 
+                    else box.classList.add('highlighted'); 
                 });
 
-                // BƯỚC 3: Hiệu ứng sau 1 giây nữa (Hiện Tổng điểm khổng lồ lên)
+                // HIỆN TỔNG ĐIỂM KHỔNG LỒ
                 setTimeout(() => {
                     document.getElementById('tvTotalScore').innerText = result.total;
                     totalBox.classList.add('show-total');
@@ -103,11 +112,9 @@
             }, 1500);
         });
 
-        // KHI ADMIN RESET TRẬN MỚI
-        socket.on('quyen_unlock_judges', function() {
-            document.getElementById('tvName').innerText = "ĐANG CHỜ VẬN ĐỘNG VIÊN...";
-            document.getElementById('tvUnit').innerText = "---";
-            document.getElementById('tvJudges').innerHTML = '<div class="waiting-text">HỆ THỐNG ĐANG GHI NHẬN ĐIỂM SỐ...</div>';
+        // 3. ĐẢM BẢO TIVI LUÔN SẠCH KHI CÓ LỆNH RESET
+        socket.on('quyen_unlock_judges', function(data) {
+            document.getElementById('tvJudges').innerHTML = '<div class="waiting-text">VẬN ĐỘNG VIÊN ĐANG THỰC HIỆN BÀI THI...</div>';
             document.getElementById('tvTotalBox').classList.remove('show-total');
         });
     </script>
