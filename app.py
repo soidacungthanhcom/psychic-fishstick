@@ -122,8 +122,14 @@ def handle_score(data):
 def handle_quyen_sync(data):
     quyen_config['category'] = data['category']
     quyen_config['max_score'] = float(data['maxScore'])
+    
+    # Lưu lại bộ tiêu chí mới nhất nếu Admin có gửi kèm
+    if 'criteria' in data:
+        quyen_config['criteria'] = data['criteria']
+        
     current_quyen_scores.clear()
-    # Ép tất cả giám định đổi giao diện
+    
+    # Đóng gói và ép tất cả Giám định đổi giao diện + bộ nút bấm
     emit('quyen_judge_sync', quyen_config, broadcast=True)
     emit('update_board', calculate_quyen_result(), broadcast=True)
 
