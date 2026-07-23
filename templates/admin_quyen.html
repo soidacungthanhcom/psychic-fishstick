@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN CHẤM QUYỀN V8.0 (TÙY CHỈNH LUẬT THI ĐẤU)</title>
+    <title>ADMIN CHẤM QUYỀN V8.5 (TỰ ĐỘNG MỞ TRẬN)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         body { background: #1a1a1a; color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; }
@@ -36,8 +36,8 @@
 
     <div class="control-bar" style="background: #222; border: 2px solid #555;">
         <button onclick="loadList()" style="background: #ff9900; color: #000;">📥 TẢI DS QUYỀN</button>
-        <select id="athleteSelect" style="width: 350px;">
-            <option value="">-- Chọn Vận động viên --</option>
+        <select id="athleteSelect" style="width: 350px; background: #fff; color: #000;">
+            <option value="">-- Chọn Vận động viên tiếp theo --</option>
         </select>
         <span id="athleteInfo" style="color: #00ffcc; font-weight: bold; font-size: 1.2em; min-width: 200px;"></span>
         <a href="/viewer_quyen" target="_blank" style="color:yellow; margin-left: 10px; font-weight: bold; text-decoration: none; border: 1px solid yellow; padding: 10px; border-radius: 5px;">📺 MỞ TIVI QUYỀN</a>
@@ -61,7 +61,6 @@
         <!-- NÚT MỞ BẢNG TÙY CHỈNH TIÊU CHÍ -->
         <button onclick="openCriteriaModal()" style="background: #fff; color: #000; box-shadow: 0 0 10px #fff;">⚙️ QUẢN LÝ TIÊU CHÍ</button>
 
-        <button onclick="resetScores()" style="background: #cc0000; color: white;">🔄 MỞ TRẬN MỚI</button>
         <button onclick="saveResult()" style="background: #0066cc; color: white;">💾 LƯU LÊN SHEET</button>
         <button onclick="lockAndShowTV()" style="background: #ff00ff; color: white; box-shadow: 0 0 10px #ff00ff;">📺 CHỐT & CHIẾU TIVI</button>
     </div>
@@ -84,27 +83,17 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
     <!-- MODAL QUẢN LÝ LUẬT THI ĐẤU -->
-    <!-- ========================================== -->
     <div id="criteriaModal">
         <div class="modal-content">
             <h2 style="color:#ffcc00; margin-top:0;">⚙️ TÙY CHỈNH TIÊU CHÍ CHẤM ĐIỂM</h2>
             <h3 style="color:#00ffcc; border-bottom: 1px solid #555; padding-bottom: 10px;" id="modalCatName"></h3>
             
             <table class="crit-table">
-                <thead>
-                    <tr>
-                        <th style="text-align: left;">Tên Lỗi (Tiêu chí)</th>
-                        <th>Điểm trừ</th>
-                        <th>Loại nút bấm</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
+                <thead><tr><th style="text-align: left;">Tên Lỗi (Tiêu chí)</th><th>Điểm trừ</th><th>Loại nút bấm</th><th>Hành động</th></tr></thead>
                 <tbody id="criteriaTableBody"></tbody>
             </table>
             
-            <!-- KHU VỰC THÊM LỖI MỚI -->
             <div style="background:#111; padding:15px; border-radius:8px; border:1px dashed #555; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                 <input type="text" id="newCritLabel" placeholder="Nhập tên lỗi (Vd: Rớt vũ khí, Đi sai thảm...)" style="flex:2; background:#333; color:#fff; border:1px solid #555; padding:10px;">
                 <input type="number" id="newCritVal" placeholder="-2" value="-2" style="flex:0.5; background:#333; color:#fff; border:1px solid #555; padding:10px; text-align:center;">
@@ -127,100 +116,32 @@
         var lastData = null;
         var currentAthlete = {}; 
 
-        // BỘ DỮ LIỆU LUẬT THI ĐẤU (Được lưu tập trung tại Admin)
+        // BỘ DỮ LIỆU LUẬT THI ĐẤU
         const criteriaData = {
-            'DON_LUYEN': [
-                { id: 'dl_m1', label: 'Sai động tác', val: -1, type: 'multi' }, { id: 'dl_m2', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'dl_m3', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' }, { id: 'dl_m4', label: 'Tấn sai kỹ thuật', val: -1, type: 'multi' }, { id: 'dl_m5', label: 'Mất thăng bằng', val: -2, type: 'multi' },
-                { id: 'dl_s1', label: 'Sai vị trí kết thúc', val: -2, type: 'single' }, { id: 'dl_s2', label: 'VK chạm nhẹ', val: -2, type: 'single' }, { id: 'dl_s3', label: 'VK chạm nặng', val: -5, type: 'single' }, { id: 'dl_s4', label: 'Quyền, cước chậm', val: -2, type: 'single' }, { id: 'dl_s5', label: 'Thiếu uy lực', val: -2, type: 'single' }, { id: 'dl_s6', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' }, { id: 'dl_s7', label: 'Quá thời gian quy định', val: -2, type: 'single' }, { id: 'dl_s8', label: 'Thiếu uyển chuyển', val: -2, type: 'single' }, { id: 'dl_s9', label: 'Thiếu ấn tượng', val: -1, type: 'single' }
-            ],
-            'SONG_LUYEN': [
-                { id: 'sl_m1', label: 'Sai động tác', val: -1, type: 'multi' }, { id: 'sl_m2', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'sl_m3', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' }, { id: 'sl_m4', label: 'Ra khỏi vạch', val: -1, type: 'multi' },
-                { id: 'sl_s1', label: 'VK chạm nhẹ', val: -2, type: 'single' }, { id: 'sl_s2', label: 'VK chạm nặng', val: -5, type: 'single' }, { id: 'sl_s3', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' }, { id: 'sl_s4', label: 'Ngã không an toàn', val: -2, type: 'single' }, { id: 'sl_s5', label: 'Thiếu nhịp nhàng', val: -1, type: 'single' }, { id: 'sl_s6', label: 'Quyền, cước chậm', val: -2, type: 'single' }, { id: 'sl_s7', label: 'Thiếu uy lực', val: -2, type: 'single' }, { id: 'sl_s8', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' }, { id: 'sl_s9', label: 'Chậm 5s quy định', val: -2, type: 'single' }, { id: 'sl_s10', label: 'Thiếu ấn tượng', val: -1, type: 'single' }
-            ],
-            'DONG_DOI': [
-                { id: 'dd_m1', label: 'Sai động tác', val: -1, type: 'multi' }, { id: 'dd_m2', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' }, { id: 'dd_m3', label: 'Tấn sai kỹ thuật', val: -1, type: 'multi' }, { id: 'dd_m4', label: 'Mất thăng bằng', val: -2, type: 'multi' }, { id: 'dd_m5', label: 'Không đồng đều', val: -2, type: 'multi' },
-                { id: 'dd_s1', label: 'Sai vị trí kết thúc', val: -2, type: 'single' }, { id: 'dd_s2', label: 'Quyền, cước chậm', val: -2, type: 'single' }, { id: 'dd_s3', label: 'Thiếu uy lực', val: -2, type: 'single' }, { id: 'dd_s4', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' }, { id: 'dd_s5', label: 'Thiếu ấn tượng', val: -1, type: 'single' }
-            ],
-            'DA_LUYEN': [
-                { id: 'dal_m1', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'dal_m2', label: 'Ra khỏi vạch', val: -1, type: 'multi' },
-                { id: 'dal_s1', label: 'Cấu trúc/Tấn công kém', val: -2, type: 'single' }, { id: 'dal_s2', label: 'Không liên tục', val: -2, type: 'single' }, { id: 'dal_s3', label: 'Chấn thương/Quên bài', val: -10, type: 'single' }, { id: 'dal_s4', label: 'Thiếu 1 đòn cơ bản', val: -3, type: 'single' }, { id: 'dal_s5', label: 'Phản đòn chậm yếu', val: -2, type: 'single' }, { id: 'dal_s6', label: 'Phối hợp không tốt', val: -2, type: 'single' }, { id: 'dal_s7', label: 'Thể lực không tốt', val: -2, type: 'single' }, { id: 'dal_s8', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' }, { id: 'dal_s9', label: 'Ngã không an toàn', val: -2, type: 'single' }, { id: 'dal_s10', label: 'Không nhịp nhàng', val: -2, type: 'single' }, { id: 'dal_s11', label: 'Thiếu ấn tượng', val: -2, type: 'single' }
-            ],
-            'TU_VE_NU': [
-                { id: 'tv_m1', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'tv_m2', label: 'Ra khỏi vạch', val: -1, type: 'multi' },
-                { id: 'tv_s1', label: 'Cấu trúc/Tấn công kém', val: -2, type: 'single' }, { id: 'tv_s2', label: 'Không liên tục', val: -2, type: 'single' }, { id: 'tv_s3', label: 'Diễu cợt/Ko nghiêm túc', val: -2, type: 'single' }, { id: 'tv_s4', label: 'Thiếu 1 đòn cơ bản', val: -3, type: 'single' }, { id: 'tv_s5', label: 'Quyền cước thiếu uy lực', val: -2, type: 'single' }, { id: 'tv_s6', label: 'Tránh né chậm', val: -2, type: 'single' }, { id: 'tv_s7', label: 'Thể lực không tốt', val: -2, type: 'single' }, { id: 'tv_s8', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' }, { id: 'tv_s9', label: 'Ngã không an toàn', val: -2, type: 'single' }, { id: 'tv_s10', label: 'Thiếu nhịp nhàng', val: -2, type: 'single' }, { id: 'tv_s11', label: 'Thiếu ấn tượng', val: -2, type: 'single' }
-            ]
+            'DON_LUYEN': [{ id: 'dl_m1', label: 'Sai động tác', val: -1, type: 'multi' }, { id: 'dl_m2', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'dl_m3', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' }, { id: 'dl_m4', label: 'Tấn sai kỹ thuật', val: -1, type: 'multi' }, { id: 'dl_m5', label: 'Mất thăng bằng', val: -2, type: 'multi' }, { id: 'dl_s1', label: 'Sai vị trí kết thúc', val: -2, type: 'single' }, { id: 'dl_s2', label: 'VK chạm nhẹ', val: -2, type: 'single' }, { id: 'dl_s3', label: 'VK chạm nặng', val: -5, type: 'single' }, { id: 'dl_s4', label: 'Quyền, cước chậm', val: -2, type: 'single' }, { id: 'dl_s5', label: 'Thiếu uy lực', val: -2, type: 'single' }, { id: 'dl_s6', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' }, { id: 'dl_s7', label: 'Quá thời gian quy định', val: -2, type: 'single' }, { id: 'dl_s8', label: 'Thiếu uyển chuyển', val: -2, type: 'single' }, { id: 'dl_s9', label: 'Thiếu ấn tượng', val: -1, type: 'single' }],
+            'SONG_LUYEN': [{ id: 'sl_m1', label: 'Sai động tác', val: -1, type: 'multi' }, { id: 'sl_m2', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'sl_m3', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' }, { id: 'sl_m4', label: 'Ra khỏi vạch', val: -1, type: 'multi' }, { id: 'sl_s1', label: 'VK chạm nhẹ', val: -2, type: 'single' }, { id: 'sl_s2', label: 'VK chạm nặng', val: -5, type: 'single' }, { id: 'sl_s3', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' }, { id: 'sl_s4', label: 'Ngã không an toàn', val: -2, type: 'single' }, { id: 'sl_s5', label: 'Thiếu nhịp nhàng', val: -1, type: 'single' }, { id: 'sl_s6', label: 'Quyền, cước chậm', val: -2, type: 'single' }, { id: 'sl_s7', label: 'Thiếu uy lực', val: -2, type: 'single' }, { id: 'sl_s8', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' }, { id: 'sl_s9', label: 'Chậm 5s quy định', val: -2, type: 'single' }, { id: 'sl_s10', label: 'Thiếu ấn tượng', val: -1, type: 'single' }],
+            'DONG_DOI': [{ id: 'dd_m1', label: 'Sai động tác', val: -1, type: 'multi' }, { id: 'dd_m2', label: 'Bỏ đ.tác / Sai nặng', val: -5, type: 'multi' }, { id: 'dd_m3', label: 'Tấn sai kỹ thuật', val: -1, type: 'multi' }, { id: 'dd_m4', label: 'Mất thăng bằng', val: -2, type: 'multi' }, { id: 'dd_m5', label: 'Không đồng đều', val: -2, type: 'multi' }, { id: 'dd_s1', label: 'Sai vị trí kết thúc', val: -2, type: 'single' }, { id: 'dd_s2', label: 'Quyền, cước chậm', val: -2, type: 'single' }, { id: 'dd_s3', label: 'Thiếu uy lực', val: -2, type: 'single' }, { id: 'dd_s4', label: 'Biểu lộ mệt mỏi', val: -2, type: 'single' }, { id: 'dd_s5', label: 'Thiếu ấn tượng', val: -1, type: 'single' }],
+            'DA_LUYEN': [{ id: 'dal_m1', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'dal_m2', label: 'Ra khỏi vạch', val: -1, type: 'multi' }, { id: 'dal_s1', label: 'Cấu trúc/Tấn công kém', val: -2, type: 'single' }, { id: 'dal_s2', label: 'Không liên tục', val: -2, type: 'single' }, { id: 'dal_s3', label: 'Chấn thương/Quên bài', val: -10, type: 'single' }, { id: 'dal_s4', label: 'Thiếu 1 đòn cơ bản', val: -3, type: 'single' }, { id: 'dal_s5', label: 'Phản đòn chậm yếu', val: -2, type: 'single' }, { id: 'dal_s6', label: 'Phối hợp không tốt', val: -2, type: 'single' }, { id: 'dal_s7', label: 'Thể lực không tốt', val: -2, type: 'single' }, { id: 'dal_s8', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' }, { id: 'dal_s9', label: 'Ngã không an toàn', val: -2, type: 'single' }, { id: 'dal_s10', label: 'Không nhịp nhàng', val: -2, type: 'single' }, { id: 'dal_s11', label: 'Thiếu ấn tượng', val: -2, type: 'single' }],
+            'TU_VE_NU': [{ id: 'tv_m1', label: 'Ngập ngừng', val: -2, type: 'multi' }, { id: 'tv_m2', label: 'Ra khỏi vạch', val: -1, type: 'multi' }, { id: 'tv_s1', label: 'Cấu trúc/Tấn công kém', val: -2, type: 'single' }, { id: 'tv_s2', label: 'Không liên tục', val: -2, type: 'single' }, { id: 'tv_s3', label: 'Diễu cợt/Ko nghiêm túc', val: -2, type: 'single' }, { id: 'tv_s4', label: 'Thiếu 1 đòn cơ bản', val: -3, type: 'single' }, { id: 'tv_s5', label: 'Quyền cước thiếu uy lực', val: -2, type: 'single' }, { id: 'tv_s6', label: 'Tránh né chậm', val: -2, type: 'single' }, { id: 'tv_s7', label: 'Thể lực không tốt', val: -2, type: 'single' }, { id: 'tv_s8', label: 'Xiết/Phản đòn ko rõ', val: -2, type: 'single' }, { id: 'tv_s9', label: 'Ngã không an toàn', val: -2, type: 'single' }, { id: 'tv_s10', label: 'Thiếu nhịp nhàng', val: -2, type: 'single' }, { id: 'tv_s11', label: 'Thiếu ấn tượng', val: -2, type: 'single' }]
         };
 
         // --- CÁC HÀM XỬ LÝ GIAO DIỆN TÙY CHỈNH LUẬT ---
-        function openCriteriaModal() {
-            let catSelect = document.getElementById('catSelect');
-            document.getElementById('modalCatName').innerText = "Đang chỉnh sửa luật thi: " + catSelect.options[catSelect.selectedIndex].text;
-            renderCriteriaTable();
-            document.getElementById('criteriaModal').style.display = 'flex';
-        }
-
+        function openCriteriaModal() { let catSelect = document.getElementById('catSelect'); document.getElementById('modalCatName').innerText = "Đang chỉnh sửa luật thi: " + catSelect.options[catSelect.selectedIndex].text; renderCriteriaTable(); document.getElementById('criteriaModal').style.display = 'flex'; }
         function closeCriteriaModal() { document.getElementById('criteriaModal').style.display = 'none'; }
-
-        function renderCriteriaTable() {
-            let tbody = document.getElementById('criteriaTableBody');
-            let cat = document.getElementById('catSelect').value;
-            tbody.innerHTML = '';
-            
-            criteriaData[cat].forEach((item, index) => {
-                let typeText = item.type === 'multi' ? '<span style="color:#ff6666; font-weight:bold;">🔴 Trừ nhiều lần</span>' : '<span style="color:#ffcc00; font-weight:bold;">⭐ Trừ 1 lần</span>';
-                tbody.innerHTML += `
-                    <tr style="border-bottom:1px solid #444;">
-                        <td style="text-align:left;">${item.label}</td>
-                        <td style="color:#ff4d4d; font-weight:bold; font-size:1.2em;">${item.val}</td>
-                        <td>${typeText}</td>
-                        <td><button onclick="deleteCriteria(${index})" style="background:#cc0000; color:white; padding:5px 10px; font-size:0.9em;">XÓA LỖI</button></td>
-                    </tr>
-                `;
-            });
-        }
-
-        function addCriteria() {
-            let cat = document.getElementById('catSelect').value;
-            let label = document.getElementById('newCritLabel').value.trim();
-            let val = parseInt(document.getElementById('newCritVal').value);
-            let type = document.getElementById('newCritType').value;
-            
-            if(!label) return alert("Vui lòng nhập tên lỗi!");
-            if(val >= 0) return alert("Điểm trừ phải là số âm (vd: -2, -5)!");
-            
-            let newId = 'custom_' + Date.now();
-            criteriaData[cat].push({ id: newId, label: label, val: val, type: type });
-            renderCriteriaTable();
-            document.getElementById('newCritLabel').value = ''; // Reset input
-        }
-
-        function deleteCriteria(index) {
-            if(confirm("Bạn có chắc chắn muốn xóa lỗi này khỏi luật chấm điểm?")) {
-                let cat = document.getElementById('catSelect').value;
-                criteriaData[cat].splice(index, 1);
-                renderCriteriaTable();
-            }
-        }
-
-        function saveAndSyncCriteria() {
-            syncToJudges(); // Bắn dữ liệu xuống giám định
-            closeCriteriaModal();
-            alert("✅ Đã LƯU & ÉP toàn bộ Giám định sử dụng Bộ tiêu chí mới này!");
-        }
-
-        // --- HÀM ĐỒNG BỘ CHO GIÁM ĐỊNH ---
+        function renderCriteriaTable() { let tbody = document.getElementById('criteriaTableBody'); let cat = document.getElementById('catSelect').value; tbody.innerHTML = ''; criteriaData[cat].forEach((item, index) => { let typeText = item.type === 'multi' ? '<span style="color:#ff6666; font-weight:bold;">🔴 Trừ nhiều lần</span>' : '<span style="color:#ffcc00; font-weight:bold;">⭐ Trừ 1 lần</span>'; tbody.innerHTML += `<tr style="border-bottom:1px solid #444;"><td style="text-align:left;">${item.label}</td><td style="color:#ff4d4d; font-weight:bold; font-size:1.2em;">${item.val}</td><td>${typeText}</td><td><button onclick="deleteCriteria(${index})" style="background:#cc0000; color:white; padding:5px 10px; font-size:0.9em;">XÓA LỖI</button></td></tr>`; }); }
+        function addCriteria() { let cat = document.getElementById('catSelect').value; let label = document.getElementById('newCritLabel').value.trim(); let val = parseInt(document.getElementById('newCritVal').value); let type = document.getElementById('newCritType').value; if(!label) return alert("Vui lòng nhập tên lỗi!"); if(val >= 0) return alert("Điểm trừ phải là số âm (vd: -2, -5)!"); let newId = 'custom_' + Date.now(); criteriaData[cat].push({ id: newId, label: label, val: val, type: type }); renderCriteriaTable(); document.getElementById('newCritLabel').value = ''; }
+        function deleteCriteria(index) { if(confirm("Bạn có chắc chắn muốn xóa lỗi này khỏi luật chấm điểm?")) { let cat = document.getElementById('catSelect').value; criteriaData[cat].splice(index, 1); renderCriteriaTable(); } }
+        function saveAndSyncCriteria() { syncToJudges(); closeCriteriaModal(); alert("✅ Đã LƯU & ÉP toàn bộ Giám định sử dụng Bộ tiêu chí mới này!"); }
+        
         function syncToJudges() {
             let cat = document.getElementById('catSelect').value;
             let max = document.getElementById('adminMaxScore').value;
-            let currentCrit = criteriaData[cat]; // Lấy danh sách luật hiện tại
-            
-            // Gửi qua mạng: Thể loại + Điểm MAX + Danh sách luật thi
+            let currentCrit = criteriaData[cat]; 
             socket.emit('quyen_admin_sync', { category: cat, maxScore: max, criteria: currentCrit });
         }
 
-
         // ==========================================
-        // CÁC HÀM HOẠT ĐỘNG CHÍNH (ĐỒNG HỒ, LƯU ĐIỂM...)
+        // CÁC HÀM HOẠT ĐỘNG CHÍNH 
         // ==========================================
         let swInterval; let swStartTime; let swElapsedTime = 0; let swIsRunning = false;
         function toggleStopwatch() {
@@ -240,15 +161,30 @@
             let oldText = btn.innerText; btn.innerText = "⏳...";
             fetch('/get_match_list?type=QUYEN').then(r => r.json()).then(data => {
                 btn.innerText = oldText; let sel = document.getElementById('athleteSelect');
-                sel.innerHTML = '<option value="">-- Chọn Vận động viên --</option>';
+                sel.innerHTML = '<option value="">-- Chọn Vận động viên tiếp theo --</option>';
                 data.forEach(item => { sel.innerHTML += `<option value='${JSON.stringify(item)}'>${item.id} - ${item.name} (${item.unit}) - ${item.category}</option>`; });
-                alert(`Đã tải thành công ${data.length} VĐV thi Quyền!`);
             }).catch(e => { btn.innerText = oldText; alert("Lỗi kết nối!"); });
         }
 
+        // --- CƠ CHẾ CHỌN VĐV TỰ ĐỘNG RESET TRẬN MỚI ---
         document.getElementById('athleteSelect').addEventListener('change', function() {
-            if(this.value) { currentAthlete = JSON.parse(this.value); document.getElementById('athleteInfo').innerText = `Đang thi: ${currentAthlete.name} | ${currentAthlete.category}`; } 
-            else { currentAthlete = {}; document.getElementById('athleteInfo').innerText = ""; }
+            if(this.value) { 
+                currentAthlete = JSON.parse(this.value); 
+                document.getElementById('athleteInfo').innerText = `Đang thi: ${currentAthlete.name} | ${currentAthlete.category}`; 
+                
+                // Tự động xóa điểm cũ, reset đồng hồ và MỞ KHÓA Giám định
+                socket.emit('reset_scores'); 
+                resetStopwatch();
+                
+                // Cảnh báo nhẹ nếu chọn sai nội dung thi đấu
+                let catSelect = document.getElementById('catSelect');
+                if(catSelect.value !== currentAthlete.category) {
+                    alert(`⚠️ VĐV này thi nội dung ${currentAthlete.category}, vui lòng chọn lại đúng Nội dung và bấm 'LƯU & ĐỒNG BỘ' ở phần Quản lý tiêu chí nếu cần!`);
+                }
+            } else { 
+                currentAthlete = {}; 
+                document.getElementById('athleteInfo').innerText = ""; 
+            }
         });
 
         socket.on('update_board', function(data) {
@@ -276,12 +212,6 @@
                     if(d.status === 'success' || d.result === 'success') alert("✅ Đã lưu thành công vào tab KQ_Quyen!");
                     else alert("❌ Có lỗi xảy ra khi lưu!");
                 }).catch(e => alert("❌ Lỗi mạng hoặc server!"));
-            }
-        }
-
-        function resetScores() { 
-            if(confirm("Mở trận mới? Hệ thống sẽ XÓA ĐIỂM CŨ, MỞ KHÓA lại màn hình cho 5 Giám định và RESET Đồng hồ!")) {
-                socket.emit('reset_scores'); resetStopwatch();
             }
         }
 
