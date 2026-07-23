@@ -129,12 +129,15 @@
 
         socket.on('quyen_lock_judges', function() { document.getElementById('lockOverlay').style.display = 'flex'; });
 
-        socket.on('quyen_unlock_judges', function() {
+        socket.on('quyen_unlock_judges', function(data) {
             document.getElementById('lockOverlay').style.display = 'none';
             resetScore();
-            document.getElementById('btnSubmit').innerText = "🚀 GỬI ĐIỂM";
-            document.getElementById('btnSubmit').style.background = "#0066cc";
-            document.getElementById('btnSubmit').disabled = false;
+            
+            // Đặt lại nút Gửi điểm
+            let btn = document.getElementById('btnSubmit');
+            btn.innerText = "🚀 GỬI ĐIỂM";
+            btn.style.background = "#0066cc";
+            btn.disabled = false;
         });
 
         // HÀM VẼ GIAO DIỆN NÚT BẤM DỰA TRÊN DỮ LIỆU ĐƯỢC NHẬN
