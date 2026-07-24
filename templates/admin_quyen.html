@@ -225,25 +225,39 @@
             }
         });
 
-        function saveResult() {
+function saveResult() {
             if(!currentAthlete.id) { alert("⚠️ Chọn VĐV trước khi lưu!"); return; }
             if(!lastData || lastData.total === "Waiting...") { alert("⚠️ Giám định chưa chấm xong!"); return; }
             if(swIsRunning) toggleStopwatch();
             
             let timeString = document.getElementById('stopwatchDisplay').innerText;
-            let finalDetails = `[Thời gian bài thi: ${timeString}] || ` + lastData.scores.map(s => `GĐ${s.id}: ${s.val} (${s.details})`).join(" || ");
+
+            // TÁCH BIỆT DỮ LIỆU ĐỂ CHUẨN BỊ LÊN GOOGLE SHEET
+            let payload = { 
+                type: 'QUYEN', 
+                matchId: currentAthlete.id, 
+                name: currentAthlete.name, 
+                total: lastData.total, 
+                time: timeString 
+            };
+
+            // Dùng vòng lặp bóc tách Điểm và Lỗi của từng Giám định ra các biến độc lập
+            for(let i=1; i<=5; i++) {
+                let s = lastData.scores.find(x => x.id == i);
+                payload['gd' + i + '_score'] = s ? s.val : '';
+                payload['gd' + i + '_err'] = s ? s.details : '';
+            }
 
             if(confirm(`Bạn có chắc chắn lưu [ ${lastData.total} điểm ] và Thời gian [ ${timeString} ] cho VĐV [ ${currentAthlete.name} ]?`)) {
                 fetch('/save_to_sheet', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'QUYEN', matchId: currentAthlete.id, name: currentAthlete.name, total: lastData.total, details: finalDetails })
+                    body: JSON.stringify(payload)
                 }).then(r => r.json()).then(d => {
-                    if(d.status === 'success' || d.result === 'success') alert("✅ Đã lưu thành công vào tab KQ_Quyen!");
+                    if(d.status === 'success' || d.result === 'success') alert("✅ Đã lưu thành công vào tab KQ_Quyen! (Dữ liệu đã được tách cột)");
                     else alert("❌ Có lỗi xảy ra khi lưu!");
                 }).catch(e => alert("❌ Lỗi mạng hoặc server!"));
             }
         }
-
         function lockAndShowTV() {
             if(!lastData || lastData.total === "Waiting...") { alert("⚠️ Giám định chưa chấm xong!"); return; }
             if(swIsRunning) toggleStopwatch();
