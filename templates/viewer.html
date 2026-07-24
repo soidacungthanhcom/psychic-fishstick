@@ -23,7 +23,7 @@
         /* BỐ CỤC CHÍNH */
         .main-content { display: flex; flex: 1; height: 91vh; }
         
-        /* KHU VỰC VĐV (Bố cục ngang để nhét dàn đèn ra mép) */
+        /* KHU VỰC VĐV */
         .team {
             flex: 1; display: flex; flex-direction: row; justify-content: space-between;
             padding: 2vh 1vw; padding-top: 3vh;
@@ -39,17 +39,24 @@
         .athlete-name { font-size: 5.5vh; font-weight: 900; text-align: center; line-height: 1.1; margin-bottom: 0.5vh; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .athlete-unit { font-size: 3vh; color: #ccc; margin-bottom: 1vh; font-weight: bold;}
         
-        /* ĐIỂM SỐ KHỔNG LỒ */
+        /* ĐIỂM SỐ KHỔNG LỒ & HIỆU ỨNG CHIẾN THẮNG */
         .score {
             font-size: 38vh; font-weight: 900; line-height: 1; margin: 1vh 0;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8); transition: all 0.3s ease;
         }
         .score-blue { color: #3399ff; }
         .score-red { color: #ff4d4d; }
 
-        /* ================================================= */
+        @keyframes blink-score {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.15); text-shadow: 0 0 60px currentColor; }
+        }
+        .winner-blink {
+            animation: blink-score 1.2s ease-in-out infinite;
+            z-index: 10;
+        }
+
         /* DÀN ĐÈN GIÁM ĐỊNH NẰM DỌC Ở 2 MÉP MÀN HÌNH */
-        /* ================================================= */
         .outer-lights {
             display: flex; gap: 1vw; padding: 2vh 1vw; background: rgba(255,255,255,0.05); 
             border-radius: 1vh; border: 1px solid #333; height: 75vh; box-sizing: border-box;
@@ -74,7 +81,7 @@
             border-color: white; transform: scale(1.15);
         }
         
-        /* CỤM ĐÈN BÁO LỖI (Nằm dưới điểm số) */
+        /* CỤM ĐÈN BÁO LỖI */
         .warnings-container { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 2vh;}
         .warn-title { font-size: 2.2vh; color: #888; margin-bottom: 1.5vh; letter-spacing: 2px;}
         .warnings { display: flex; gap: 2vw; }
@@ -93,15 +100,6 @@
             padding: 2vh 2vw; border-radius: 2vh; border: 4px solid #444; 
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8); line-height: 1; font-family: monospace;
         }
-
-        /* MÀN HÌNH KẾT THÚC TRẬN */
-        #winnerOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 1000; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-        #winnerText { font-size: 15vh; font-weight: 900; color: yellow; text-shadow: 0 0 50px yellow; text-align: center; line-height: 1.2;}
-        .winner-sub { font-size: 6vh; color: #fff; margin-top: 3vh;}
     </style>
 </head>
 <body>
@@ -110,7 +108,7 @@
         <div class="logo-box">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo">
         </div>
-        <h1>GIẢI HỘI THAO NỘI BỘ VOVINAM LẦN THỨ IV</h1>
+        <h1>HỆ THỐNG ĐIỀU HÀNH GIẢI VOVINAM</h1>
         <div class="logo-box">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Vovinam_logo.svg/200px-Vovinam_logo.svg.png" alt="Logo">
         </div>
@@ -119,7 +117,6 @@
     <div class="main-content">
         <!-- ================= BÊN XANH ================= -->
         <div class="team team-blue">
-            <!-- ĐÈN GIÁM ĐỊNH NẰM SÁT MÉP TRÁI -->
             <div class="outer-lights">
                 <div class="light-col">
                     <div class="light-title" style="color: #ffcc00;">TAY</div>
@@ -131,7 +128,6 @@
                 </div>
             </div>
             
-            <!-- THÔNG TIN VĐV XANH -->
             <div class="team-inner">
                 <div class="athlete-name blue-text" id="nameBlue">VĐV XANH</div>
                 <div class="athlete-unit" id="unitBlue">ĐƠN VỊ</div>
@@ -160,7 +156,6 @@
 
         <!-- ================= BÊN ĐỎ ================= -->
         <div class="team team-red">
-            <!-- THÔNG TIN VĐV ĐỎ -->
             <div class="team-inner">
                 <div class="athlete-name red-text" id="nameRed">VĐV ĐỎ</div>
                 <div class="athlete-unit" id="unitRed">ĐƠN VỊ</div>
@@ -174,7 +169,6 @@
                 </div>
             </div>
 
-            <!-- ĐÈN GIÁM ĐỊNH NẰM SÁT MÉP PHẢI -->
             <div class="outer-lights">
                 <div class="light-col">
                     <div class="light-title" style="color: #ffcc00;">TAY</div>
@@ -186,12 +180,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- MÀN HÌNH KẾT THÚC TRẬN -->
-    <div id="winnerOverlay" onclick="this.style.display='none'">
-        <div id="winnerText">XANH THẮNG</div>
-        <div class="winner-sub">CHÚC MỪNG VẬN ĐỘNG VIÊN</div>
     </div>
 
     <style>
@@ -210,7 +198,10 @@
                 document.getElementById('unitRed').innerText = data.redUnit || '---';
                 document.getElementById('roundDisplay').innerText = data.round || 'HIỆP 1';
                 document.getElementById('category').innerText = data.category || 'NỘI DUNG THI ĐẤU';
-                document.getElementById('winnerOverlay').style.display = 'none'; 
+                
+                // Dọn dẹp hiệu ứng nhấp nháy khi chuyển VĐV
+                document.getElementById('scoreBlue').classList.remove('winner-blink');
+                document.getElementById('scoreRed').classList.remove('winner-blink');
             }
             else if(data.type === 'score') {
                 document.getElementById('scoreBlue').innerText = data.blue;
@@ -235,7 +226,10 @@
                 document.getElementById('scoreBlue').innerText = 0;
                 document.getElementById('scoreRed').innerText = 0;
                 document.getElementById('timer').innerText = "02:00";
-                document.getElementById('winnerOverlay').style.display = 'none';
+                
+                // Dọn dẹp hiệu ứng nhấp nháy khi làm mới trận
+                document.getElementById('scoreBlue').classList.remove('winner-blink');
+                document.getElementById('scoreRed').classList.remove('winner-blink');
                 
                 for(let i=1; i<=3; i++) {
                     document.getElementById('bw'+i).classList.remove('warn-active');
@@ -244,13 +238,12 @@
             }
         });
 
-        // --- THUẬT TOÁN MÀU SẮC ĐÈN (VÀNG VÀ XANH LAM) ---
+        // --- ĐỒNG BỘ ĐÈN BÁO GIÁM ĐỊNH BẤM ---
         socket.on('server_send_vote', function(d) {
             let sideCode = d.side === 'blue' ? 'b' : 'r';
             let lightId = `vw_l_${sideCode}${d.points}_${d.judge_id}`;
             let light = document.getElementById(lightId);
             
-            // +1 (Tay) => Màu Vàng | +2 (Chân) => Màu Xanh Lam
             let colorClass = d.points == 1 ? 'on-yellow' : 'on-cyan';
             
             if(light) { 
@@ -259,24 +252,20 @@
             }
         });
 
-        // --- HƯỞNG ỨNG KHI KẾT THÚC TRẬN ---
+        // --- HƯỞNG ỨNG KHI CHỐT KẾT QUẢ KẾT THÚC TRẬN ---
         socket.on('viewer_finish', function(data) {
-            let overlay = document.getElementById('winnerOverlay');
-            let text = document.getElementById('winnerText');
-            overlay.style.display = 'flex';
+            // Đảm bảo không còn hiệu ứng cũ bám lại
+            document.getElementById('scoreBlue').classList.remove('winner-blink');
+            document.getElementById('scoreRed').classList.remove('winner-blink');
             
             if(data.winner === 'XANH') {
-                text.innerText = "XANH CHIẾN THẮNG";
-                text.style.color = "#3399ff";
-                text.style.textShadow = "0 0 50px #3399ff";
+                document.getElementById('scoreBlue').classList.add('winner-blink');
             } else if(data.winner === 'ĐỎ') {
-                text.innerText = "ĐỎ CHIẾN THẮNG";
-                text.style.color = "#ff4d4d";
-                text.style.textShadow = "0 0 50px #ff4d4d";
+                document.getElementById('scoreRed').classList.add('winner-blink');
             } else {
-                text.innerText = "KẾT QUẢ HÒA";
-                text.style.color = "yellow";
-                text.style.textShadow = "0 0 50px yellow";
+                // Kết quả Hòa: Cho nhấp nháy cả 2 bên
+                document.getElementById('scoreBlue').classList.add('winner-blink');
+                document.getElementById('scoreRed').classList.add('winner-blink');
             }
         });
     </script>
