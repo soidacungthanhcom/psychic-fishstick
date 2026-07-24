@@ -39,7 +39,7 @@
         .athlete-name { font-size: 5.5vh; font-weight: 900; text-align: center; line-height: 1.1; margin-bottom: 0.5vh; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .athlete-unit { font-size: 3vh; color: #ccc; margin-bottom: 1vh; font-weight: bold;}
         
-        /* ĐIỂM SỐ KHỔNG LỒ & HIỆU ỨNG CHIẾN THẮNG */
+        /* ĐIỂM SỐ KHỔNG LỒ & HIỆU ỨNG CHIẾN THẮNG SÁNG RỰC */
         .score {
             font-size: 38vh; font-weight: 900; line-height: 1; margin: 1vh 0;
             text-shadow: 0 10px 30px rgba(0,0,0,0.8); transition: all 0.3s ease;
@@ -48,8 +48,8 @@
         .score-red { color: #ff4d4d; }
 
         @keyframes blink-score {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.15); text-shadow: 0 0 60px currentColor; }
+            0%, 100% { transform: scale(1); text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+            50% { transform: scale(1.15); text-shadow: 0 0 50px currentColor, 0 0 100px currentColor; }
         }
         .winner-blink {
             animation: blink-score 1.2s ease-in-out infinite;
