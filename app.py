@@ -101,8 +101,10 @@ def save_to_sheet():
 # =========================================================
 @socketio.on('vote_event')
 def handle_vote(data): emit('server_send_vote', data, broadcast=True)
+
 @socketio.on('admin_update')
 def handle_admin_update(data): emit('viewer_receive_update', data, broadcast=True)
+
 @socketio.on('finish_match')
 def handle_finish(data): emit('viewer_finish', data, broadcast=True)
 
@@ -173,75 +175,5 @@ def calculate_quyen_result():
 
     return {'scores': scores_list, 'total': round(total, 2), 'dropped': dropped_ids, 'config': num}
 
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
-
-# =========================================================
-# TRUNG TÂM XỬ LÝ SOCKET - ĐỐI KHÁNG
-# =========================================================
-@socketio.on('vote_event')
-def handle_vote(data): emit('server_send_vote', data, broadcast=True)
-
-@socketio.on('admin_update')
-def handle_admin_update(data): emit('viewer_receive_update', data, broadcast=True)
-
-@socketio.on('finish_match')
-def handle_finish(data): emit('viewer_finish', data, broadcast=True)
-
-
-# =========================================================
-# TRUNG TÂM XỬ LÝ SOCKET - QUYỀN
-# =========================================================
-current_quyen_scores = {}
-quyen_config = {'num_judges': 5}
-
-@socketio.on('submit_score')
-def handle_score(data):
-    judge_id = str(data['judge_id'])
-    current_quyen_scores[judge_id] = {'val': float(data['score']), 'details': data.get('details', '')}
-    emit('update_board', calculate_quyen_result(), broadcast=True)
-
-@socketio.on('change_config')
-def handle_config(data):
-    quyen_config['num_judges'] = int(data['num'])
-    current_quyen_scores.clear()
-    emit('config_updated', {'num': quyen_config['num_judges']}, broadcast=True)
-    emit('update_board', calculate_quyen_result(), broadcast=True)
-
-@socketio.on('reset_scores')
-def handle_reset():
-    current_quyen_scores.clear()
-    emit('update_board', calculate_quyen_result(), broadcast=True)
-
-def calculate_quyen_result():
-    num = quyen_config['num_judges']
-    scores_list = []
-    for i in range(1, num + 1):
-        s_id = str(i)
-        data = current_quyen_scores.get(s_id, {'val': 0, 'details': ''})
-        scores_list.append({'id': s_id, 'val': data['val'], 'details': data['details']})
-
-    if len(current_quyen_scores) < num:
-        return {'scores': scores_list, 'total': 'Waiting...', 'dropped': []}
-
-    vals = [s['val'] for s in scores_list]
-    dropped_ids = []
-    total = 0
-
-    if num == 3: total = sum(vals)
-    else: 
-        max_v, min_v = max(vals), min(vals)
-        found_max = found_min = False
-        for s in scores_list:
-            if s['val'] == max_v and not found_max:
-                found_max = True; dropped_ids.append(s['id'])
-            elif s['val'] == min_v and not found_min:
-                found_min = True; dropped_ids.append(s['id'])
-            else:
-                total += s['val']
-
-    return {'scores': scores_list, 'total': round(total, 2), 'dropped': dropped_ids, 'config': num}
-
-# =========================================================
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000)
